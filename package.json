@@ -20,14 +20,22 @@
   "napi": {
     "binaryName": "node-tantivy-binding",
     "targets": [
-      "x86_64-pc-windows-msvc",
+      "aarch64-apple-darwin",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "armv7-unknown-linux-gnueabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "s390x-unknown-linux-gnu",
       "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
       "x86_64-unknown-linux-gnu",
-      "aarch64-apple-darwin"
+      "x86_64-unknown-linux-musl"
     ]
   },
   "engines": {
-    "node": ">= 12.22.0 < 13 || >= 14.17.0 < 15 || >= 15.12.0 < 16 || >= 16.0.0"
+    "node": ">= 18.17.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -44,7 +52,8 @@
     "format:rs": "cargo fmt",
     "lint": "oxlint .",
     "prepublishOnly": "napi prepublish -t npm",
-    "test": "ava",
+    "test": "vitest",
+    "test:run": "vitest run",
     "version": "napi version",
     "prepare": "husky"
   },
@@ -55,7 +64,7 @@
     "@oxc-node/core": "^0.0.32",
     "@taplo/cli": "^0.7.0",
     "@tybys/wasm-util": "^0.10.0",
-    "ava": "^6.4.1",
+    "@types/node": "^22.10.5",
     "chalk": "^5.4.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
@@ -63,7 +72,8 @@
     "oxlint": "^1.8.0",
     "prettier": "^3.6.2",
     "tinybench": "^4.0.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
   },
   "lint-staged": {
     "*.@(js|ts|tsx)": [
@@ -74,20 +84,6 @@
     ],
     "*.toml": [
       "taplo format"
-    ]
-  },
-  "ava": {
-    "extensions": {
-      "ts": "module"
-    },
-    "timeout": "2m",
-    "workerThreads": false,
-    "environmentVariables": {
-      "OXC_TSCONFIG_PATH": "./__test__/tsconfig.json"
-    },
-    "nodeArguments": [
-      "--import",
-      "@oxc-node/core/register"
     ]
   },
   "prettier": {
