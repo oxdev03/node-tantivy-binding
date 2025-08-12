@@ -19,6 +19,7 @@
   ],
   "napi": {
     "binaryName": "node-tantivy-binding",
+    "nodeAbiVersions": ["127"],
     "targets": [
       "aarch64-apple-darwin",
       "aarch64-pc-windows-msvc",
@@ -35,7 +36,7 @@
     ]
   },
   "engines": {
-    "node": ">= 18.17.0"
+    "node": ">= 22.15.1"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
