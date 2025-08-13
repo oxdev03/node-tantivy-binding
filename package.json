@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Template project for writing node package with napi-rs",
   "main": "index.js",
+  "types": "index.d.ts",
   "repository": "git@github.com:napi-rs/package-template.git",
   "license": "MIT",
   "keywords": [
@@ -19,7 +20,6 @@
   ],
   "napi": {
     "binaryName": "node-tantivy-binding",
-    "nodeAbiVersions": ["127"],
     "targets": [
       "aarch64-apple-darwin",
       "aarch64-pc-windows-msvc",
@@ -53,8 +53,7 @@
     "format:rs": "cargo fmt",
     "lint": "oxlint .",
     "prepublishOnly": "napi prepublish -t npm",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest run",
     "version": "napi version",
     "prepare": "husky"
   },
