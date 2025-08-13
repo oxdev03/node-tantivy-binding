@@ -1,0 +1,3 @@
+[submodule "tantivy-py"]
+	path = tantivy-py
+	url = https://github.com/quickwit-oss/tantivy-py.git
