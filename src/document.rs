@@ -414,10 +414,13 @@ fn json_to_tantivy_value(json: serde_json::Value) -> Result<Value> {
             }
         }
         serde_json::Value::String(s) => Ok(Value::Str(s)),
-        serde_json::Value::Array(_) => Err(Error::new(
-            Status::InvalidArg,
-            "Array is not supported".to_string(),
-        )),
+        serde_json::Value::Array(arr) => {
+            let mut tantivy_array = Vec::new();
+            for item in arr {
+                tantivy_array.push(json_to_tantivy_value(item)?);
+            }
+            Ok(Value::Array(tantivy_array))
+        },
         serde_json::Value::Object(m) => {
             let mut obj = Vec::new();
             for (k, v) in m {
@@ -595,6 +598,13 @@ fn value_to_js(env: Env, value: &Value) -> Result<JsUnknown> {
             }
             js_obj.into_unknown()
         }
+        Value::Array(arr) => {
+            let mut js_arr = env.create_array_with_length(arr.len())?;
+            for (i, v) in arr.iter().enumerate() {
+                js_arr.set_element(i as u32, value_to_js(env, v)?)?;
+            }
+            js_arr.into_unknown()
+        }
         Value::Bool(b) => env.get_boolean(*b)?.into_unknown(),
         Value::IpAddr(i) => env.create_string(&i.to_string())?.into_unknown(),
         _ => env.get_null()?.into_unknown(), // PreTokStr and Array not handled directly
@@ -612,6 +622,10 @@ fn value_to_string(value: &Value) -> String {
         Value::Facet(facet) => facet.to_string(),
         Value::Object(json_object) => {
             serde_json::to_string(&json_object).unwrap_or_else(|_| "{}".to_string())
+        }
+        Value::Array(arr) => {
+            let arr_strings: Vec<String> = arr.iter().map(value_to_string).collect();
+            format!("[{}]", arr_strings.join(","))
         }
         Value::Bool(b) => format!("{b}"),
         Value::IpAddr(i) => format!("{}", *i),
