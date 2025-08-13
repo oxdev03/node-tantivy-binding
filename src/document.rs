@@ -2,10 +2,8 @@
 #![allow(clippy::wrong_self_convention)]
 
 use chrono::{DateTime, Utc};
-use napi::{
-  Env, Error, JsBoolean, JsBuffer, JsNumber, JsObject, JsString, JsUnknown, Result, Status,
-  ValueType,
-};
+use napi::bindgen_prelude::*;
+use napi::{Env, Error, Result, Status};
 use napi_derive::napi;
 use std::{collections::BTreeMap, fmt, net::IpAddr, str::FromStr};
 use tantivy::{self as tv, schema::document::OwnedValue as Value, time};
@@ -64,7 +62,7 @@ impl Document {
   /// @param dict - Object containing field names and values to add
   /// @param schema - Optional schema for type validation
   #[napi]
-  pub fn extend(&mut self, dict: JsObject, schema: Option<&Schema>) -> Result<()> {
+  pub fn extend(&mut self, dict: Object, schema: Option<&Schema>) -> Result<()> {
     Document::extract_js_values_from_dict(dict, schema, &mut self.field_values)
   }
 
@@ -73,7 +71,7 @@ impl Document {
   /// @param dict - Object containing field names and values
   /// @param schema - Optional schema for type validation
   #[napi(factory)]
-  pub fn from_dict(dict: JsObject, schema: Option<&Schema>) -> Result<Document> {
+  pub fn from_dict(dict: Object, schema: Option<&Schema>) -> Result<Document> {
     let mut field_values: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     Document::extract_js_values_from_dict(dict, schema, &mut field_values)?;
     Ok(Document { field_values })
@@ -82,10 +80,10 @@ impl Document {
   /// Returns a dictionary with the different
   /// field values.
   #[napi]
-  pub fn to_dict(&self, env: Env) -> Result<JsObject> {
-    let mut dict = env.create_object()?;
+  pub fn to_dict(&self, env: Env) -> Result<Object> {
+    let mut dict = Object::new(&env)?;
     for (key, values) in &self.field_values {
-      let mut arr = env.create_array_with_length(values.len())?;
+      let mut arr = env.create_array(values.len() as u32)?;
       for (i, value) in values.iter().enumerate() {
         arr.set_element(i as u32, value_to_js(env, value)?)?;
       }
@@ -176,8 +174,8 @@ impl Document {
   /// @param field_name - The field for which we are adding the bytes.
   /// @param value - The bytes that will be added to the document.
   #[napi]
-  pub fn add_bytes(&mut self, field_name: String, bytes: JsBuffer) -> Result<()> {
-    self.add_value(field_name, bytes.into_value()?.to_vec());
+  pub fn add_bytes(&mut self, field_name: String, bytes: Buffer) -> Result<()> {
+    self.add_value(field_name, bytes.to_vec());
     Ok(())
   }
 
@@ -186,7 +184,7 @@ impl Document {
   /// @param field_name - The field for which we are adding the JSON.
   /// @param value - The JSON object as a string or object.
   #[napi]
-  pub fn add_json(&mut self, field_name: String, value: JsObject) -> Result<()> {
+  pub fn add_json(&mut self, field_name: String, value: Object) -> Result<()> {
     let json_value = js_object_to_json_value(value)?;
     let tantivy_value = json_to_tantivy_value(json_value)?;
     self.add_value(field_name, tantivy_value);
@@ -225,11 +223,11 @@ impl Document {
   /// @param field_name - The field for which we would like to get the value.
   /// @returns The value if one is found, otherwise null.
   #[napi]
-  pub fn get_first(&self, env: Env, field_name: String) -> Result<JsUnknown> {
+  pub fn get_first(&self, env: Env, field_name: String) -> Result<Unknown> {
     if let Some(value) = self.iter_values_for_field(&field_name).next() {
       value_to_js(env, value)
     } else {
-      Ok(env.get_null()?.into_unknown())
+      env.to_js_value(&()) // Returns undefined
     }
   }
 
@@ -238,16 +236,12 @@ impl Document {
   /// @param field_name - The field for which we would like to get the values.
   /// @returns A list of values.
   #[napi]
-  pub fn get_all(&self, env: Env, field_name: String) -> Result<JsObject> {
-    let values: Vec<JsUnknown> = self
+  pub fn get_all(&self, env: Env, field_name: String) -> Result<Unknown> {
+    let values: Vec<serde_json::Value> = self
       .iter_values_for_field(&field_name)
-      .map(|value| value_to_js(env, value))
-      .collect::<Result<Vec<_>>>()?;
-    let mut arr = env.create_array_with_length(values.len())?;
-    for (i, v) in values.iter().enumerate() {
-      arr.set_element(i as u32, v)?;
-    }
-    Ok(arr)
+      .map(|value| value_to_serde_json(value))
+      .collect();
+    env.to_js_value(&values)
   }
 }
 
@@ -264,15 +258,15 @@ impl Document {
   }
 
   fn extract_js_values_from_dict(
-    dict: JsObject,
+    dict: Object,
     schema: Option<&Schema>,
     out_field_values: &mut BTreeMap<String, Vec<Value>>,
   ) -> Result<()> {
     let keys = dict.get_property_names()?;
     for i in 0..keys.get_array_length()? {
-      let key_js: JsString = keys.get_element(i)?;
-      let key: String = key_js.into_utf8()?.as_str()?.to_string();
-      let value_js: JsUnknown = dict.get_property(key_js)?;
+      let key_js = keys.get_element::<String>(i)?;
+      let key: String = key_js;
+      let value_js: Unknown = dict.get_named_property(&key)?;
 
       let field_type = if let Some(schema) = schema {
         match schema.inner.get_field(&key) {
@@ -310,38 +304,41 @@ fn to_napi_error(e: impl std::error::Error) -> Error {
   Error::new(Status::GenericFailure, format!("{}", e))
 }
 
-fn js_object_to_json_value(obj: JsObject) -> Result<serde_json::Value> {
+fn js_object_to_json_value(obj: Object) -> Result<serde_json::Value> {
   let keys = obj.get_property_names()?;
   let mut map = serde_json::Map::new();
 
   for i in 0..keys.get_array_length()? {
-    let key_js: JsString = keys.get_element(i)?;
-    let key: String = key_js.into_utf8()?.as_str()?.to_string();
-    let value_js: JsUnknown = obj.get_property(key_js)?;
+    let key: String = keys.get_element(i)?;
+    let value_js: Unknown = obj.get_named_property(&key)?;
 
     let json_value = match value_js.get_type()? {
       ValueType::String => {
-        let s: JsString = unsafe { value_js.cast() };
-        serde_json::Value::String(s.into_utf8()?.as_str()?.to_string())
+        let s: String = value_js
+          .coerce_to_string()?
+          .into_utf8()?
+          .as_str()?
+          .to_string();
+        serde_json::Value::String(s)
       }
       ValueType::Number => {
-        let n: JsNumber = unsafe { value_js.cast() };
+        let n: f64 = value_js.coerce_to_number()?.get_double()?;
         serde_json::Value::Number(
-          serde_json::Number::from_f64(n.get_double()?)
+          serde_json::Number::from_f64(n)
             .ok_or_else(|| Error::new(Status::InvalidArg, "Invalid number".to_string()))?,
         )
       }
-      ValueType::Boolean => {
-        let b: JsBoolean = unsafe { value_js.cast() };
-        serde_json::Value::Bool(b.get_value()?)
-      }
+      ValueType::Boolean => match value_js.coerce_to_bool() {
+        Ok(b) => serde_json::Value::Bool(b),
+        Err(_) => serde_json::Value::Bool(false),
+      },
       ValueType::Object => {
-        let inner_obj: JsObject = unsafe { value_js.cast() };
+        let inner_obj: Object = unsafe { value_js.cast()? };
         if value_js.is_array()? {
           let len = inner_obj.get_array_length()?;
           let mut arr = Vec::new();
           for j in 0..len {
-            let elem: JsUnknown = inner_obj.get_element(j)?;
+            let elem: Unknown = inner_obj.get_element(j)?;
             arr.push(js_unknown_to_json_value(elem)?);
           }
           serde_json::Value::Array(arr)
@@ -364,27 +361,25 @@ fn js_object_to_json_value(obj: JsObject) -> Result<serde_json::Value> {
   Ok(serde_json::Value::Object(map))
 }
 
-fn js_unknown_to_json_value(value: JsUnknown) -> Result<serde_json::Value> {
+fn js_unknown_to_json_value(value: Unknown) -> Result<serde_json::Value> {
   match value.get_type()? {
     ValueType::String => {
-      let s: JsString = unsafe { value.cast() };
-      Ok(serde_json::Value::String(
-        s.into_utf8()?.as_str()?.to_string(),
-      ))
+      let s: String = value.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
+      Ok(serde_json::Value::String(s))
     }
     ValueType::Number => {
-      let n: JsNumber = unsafe { value.cast() };
+      let n: f64 = value.coerce_to_number()?.get_double()?;
       Ok(serde_json::Value::Number(
-        serde_json::Number::from_f64(n.get_double()?)
+        serde_json::Number::from_f64(n)
           .ok_or_else(|| Error::new(Status::InvalidArg, "Invalid number".to_string()))?,
       ))
     }
     ValueType::Boolean => {
-      let b: JsBoolean = unsafe { value.cast() };
-      Ok(serde_json::Value::Bool(b.get_value()?))
+      let bool_value = value.coerce_to_bool()?;
+      Ok(serde_json::Value::Bool(bool_value))
     }
     ValueType::Object => {
-      let obj: JsObject = unsafe { value.cast() };
+      let obj: Object = unsafe { value.cast()? };
       js_object_to_json_value(obj)
     }
     ValueType::Null => Ok(serde_json::Value::Null),
@@ -434,22 +429,22 @@ fn json_to_tantivy_value(json: serde_json::Value) -> Result<Value> {
   }
 }
 
-fn extract_value(any: &JsUnknown) -> Result<Value> {
+fn extract_value(any: &Unknown) -> Result<Value> {
   match any.get_type()? {
     ValueType::String => {
-      let s: JsString = unsafe { any.cast() };
-      Ok(Value::Str(s.into_utf8()?.as_str()?.to_string()))
+      let s: String = any.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
+      Ok(Value::Str(s))
     }
     ValueType::Number => {
-      let n: JsNumber = unsafe { any.cast() };
-      Ok(Value::F64(n.get_double()?))
+      let n: f64 = any.coerce_to_number()?.get_double()?;
+      Ok(Value::F64(n))
     }
     ValueType::Boolean => {
-      let b: JsBoolean = unsafe { any.cast() };
-      Ok(Value::Bool(b.get_value()?))
+      let b: bool = any.coerce_to_bool()?;
+      Ok(Value::Bool(b))
     }
     ValueType::Object => {
-      let obj: JsObject = unsafe { any.cast() };
+      let obj: Object = unsafe { any.cast()? };
       let json_value = js_object_to_json_value(obj)?;
       json_to_tantivy_value(json_value)
     }
@@ -461,7 +456,7 @@ fn extract_value(any: &JsUnknown) -> Result<Value> {
 }
 
 fn extract_value_for_type(
-  any: &JsUnknown,
+  any: &Unknown,
   tv_type: &tv::schema::FieldType,
   field_name: &str,
 ) -> Result<Value> {
@@ -480,35 +475,34 @@ fn extract_value_for_type(
     tv::schema::Type::Str => {
       match any.get_type()? {
         ValueType::String => {
-          let s: JsString = unsafe { any.cast() };
-          Value::Str(s.into_utf8()?.as_str()?.to_string())
+          let s: String = any.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
+          Value::Str(s)
         }
         _ => {
           // Try coercing to string as fallback
-          let s: JsString = unsafe { any.cast() };
-          Value::Str(s.into_utf8()?.as_str()?.to_string())
+          let s: String = any.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
+          Value::Str(s)
         }
       }
     }
     tv::schema::Type::U64 => {
-      let n: JsNumber = unsafe { any.cast() };
-      Value::U64(n.get_uint32()? as u64) // Note: potential precision loss
+      let n: f64 = any.coerce_to_number()?.get_double()?;
+      Value::U64(n as u64) // Note: potential precision loss
     }
     tv::schema::Type::I64 => {
-      let n: JsNumber = unsafe { any.cast() };
-      Value::I64(n.get_int64()?)
+      let n: f64 = any.coerce_to_number()?.get_double()?;
+      Value::I64(n as i64)
     }
     tv::schema::Type::F64 => {
-      let n: JsNumber = unsafe { any.cast() };
-      Value::F64(n.get_double()?)
+      let n: f64 = any.coerce_to_number()?.get_double()?;
+      Value::F64(n)
     }
     tv::schema::Type::Bool => {
-      let b: JsBoolean = unsafe { any.cast() };
-      Value::Bool(b.get_value()?)
+      let b: bool = any.coerce_to_bool()?;
+      Value::Bool(b)
     }
     tv::schema::Type::Date => {
-      let s: JsString = unsafe { any.cast() };
-      let s = s.into_utf8()?.as_str()?.to_string();
+      let s: String = any.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
       let date = if let Ok(dt) = DateTime::parse_from_rfc3339(&s) {
         dt.with_timezone(&Utc)
       } else if let Ok(timestamp) = s.parse::<i64>() {
@@ -523,22 +517,20 @@ fn extract_value_for_type(
       Value::Date(tv::DateTime::from_timestamp_secs(date.timestamp()))
     }
     tv::schema::Type::Facet => {
-      let s: JsString = unsafe { any.cast() };
-      let s = s.into_utf8()?.as_str()?.to_string();
+      let s: String = any.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
       Value::Facet(tv::schema::Facet::from(s.as_str()))
     }
     tv::schema::Type::Bytes => {
-      let buf: JsBuffer = unsafe { any.cast() };
-      Value::Bytes(buf.into_value()?.to_vec())
+      let buf: Buffer = unsafe { any.cast()? };
+      Value::Bytes(buf.to_vec())
     }
     tv::schema::Type::Json => {
-      let obj: JsObject = unsafe { any.cast() };
+      let obj: Object = unsafe { any.cast()? };
       let json_value = js_object_to_json_value(obj)?;
       json_to_tantivy_value(json_value)?
     }
     tv::schema::Type::IpAddr => {
-      let s: JsString = unsafe { any.cast() };
-      let s = s.into_utf8()?.as_str()?.to_string();
+      let s: String = any.coerce_to_string()?.into_utf8()?.as_str()?.to_string();
       let ip_addr = IpAddr::from_str(&s).map_err(to_napi_error)?;
       let ipv6_addr = match ip_addr {
         IpAddr::V4(addr) => addr.to_ipv6_mapped(),
@@ -551,13 +543,13 @@ fn extract_value_for_type(
   Ok(value)
 }
 
-fn extract_value_single_or_list(any: &JsUnknown) -> Result<Vec<Value>> {
+fn extract_value_single_or_list(any: &Unknown) -> Result<Vec<Value>> {
   if any.is_array()? {
-    let obj: JsObject = unsafe { any.cast() };
+    let obj: Object = unsafe { any.cast()? };
     let len = obj.get_array_length()?;
     let mut values = Vec::with_capacity(len as usize);
     for i in 0..len {
-      let elem: JsUnknown = obj.get_element(i)?;
+      let elem: Unknown = obj.get_element(i)?;
       values.push(extract_value(&elem)?);
     }
     Ok(values)
@@ -567,16 +559,16 @@ fn extract_value_single_or_list(any: &JsUnknown) -> Result<Vec<Value>> {
 }
 
 fn extract_value_single_or_list_for_type(
-  any: &JsUnknown,
+  any: &Unknown,
   field_type: &tv::schema::FieldType,
   field_name: &str,
 ) -> Result<Vec<Value>> {
   if any.is_array()? {
-    let obj: JsObject = unsafe { any.cast() };
+    let obj: Object = unsafe { any.cast()? };
     let len = obj.get_array_length()?;
     let mut values = Vec::with_capacity(len as usize);
     for i in 0..len {
-      let elem: JsUnknown = obj.get_element(i)?;
+      let elem: Unknown = obj.get_element(i)?;
       values.push(extract_value_for_type(&elem, field_type, field_name)?);
     }
     Ok(values)
@@ -585,39 +577,80 @@ fn extract_value_single_or_list_for_type(
   }
 }
 
-fn value_to_js(env: Env, value: &Value) -> Result<JsUnknown> {
+fn value_to_serde_json(value: &Value) -> serde_json::Value {
+  match value {
+    Value::Str(s) => serde_json::Value::String(s.clone()),
+    Value::U64(n) => serde_json::Value::Number(serde_json::Number::from(*n)),
+    Value::I64(n) => serde_json::Value::Number(serde_json::Number::from(*n)),
+    Value::F64(n) => serde_json::Value::Number(
+      serde_json::Number::from_f64(*n).unwrap_or(serde_json::Number::from(0)),
+    ),
+    Value::Bool(b) => serde_json::Value::Bool(*b),
+    Value::Date(d) => {
+      let formatted = d
+        .into_utc()
+        .format(&time::format_description::well_known::Iso8601::DEFAULT)
+        .unwrap_or_else(|_| "".to_string());
+      serde_json::Value::String(formatted)
+    }
+    Value::Facet(f) => serde_json::Value::String(f.to_string()),
+    Value::Bytes(b) => serde_json::Value::Array(
+      b.iter()
+        .map(|&byte| serde_json::Value::Number(serde_json::Number::from(byte)))
+        .collect(),
+    ),
+    Value::IpAddr(ip) => serde_json::Value::String(ip.to_string()),
+    Value::Object(obj) => {
+      let map: serde_json::Map<String, serde_json::Value> = obj
+        .iter()
+        .map(|(k, v)| (k.clone(), value_to_serde_json(v)))
+        .collect();
+      serde_json::Value::Object(map)
+    }
+    Value::Array(arr) => {
+      let vec: Vec<serde_json::Value> = arr.iter().map(|v| value_to_serde_json(v)).collect();
+      serde_json::Value::Array(vec)
+    }
+    _ => serde_json::Value::Null, // For types we don't handle
+  }
+}
+
+fn value_to_js(env: Env, value: &Value) -> Result<Unknown> {
   Ok(match value {
-    Value::Str(text) => env.create_string(text)?.into_unknown(),
-    Value::U64(num) => env.create_double(*num as f64)?.into_unknown(),
-    Value::I64(num) => env.create_double(*num as f64)?.into_unknown(),
-    Value::F64(num) => env.create_double(*num)?.into_unknown(),
-    Value::Bytes(b) => env.create_buffer_with_data(b.clone())?.into_unknown(),
+    Value::Str(text) => env.to_js_value(&text.as_str())?,
+    Value::U64(num) => env.to_js_value(&(*num as f64))?,
+    Value::I64(num) => env.to_js_value(&(*num as f64))?,
+    Value::F64(num) => env.to_js_value(num)?,
+    Value::Bytes(b) => {
+      // For bytes, we need to create a buffer differently in v3
+      env.to_js_value(&b.as_slice())?
+    }
     Value::Date(d) => {
       // Format the date using time's Iso8601 formatter
       let formatted = d
         .into_utc()
         .format(&time::format_description::well_known::Iso8601::DEFAULT)
         .map_err(|_| Error::new(Status::GenericFailure, "Failed to format date".to_string()))?;
-      env.create_string(&formatted)?.into_unknown()
+      env.to_js_value(&formatted)?
     }
-    Value::Facet(f) => env.create_string(&f.to_string())?.into_unknown(),
+    Value::Facet(f) => env.to_js_value(&f.to_string())?,
     Value::Object(obj) => {
-      let mut js_obj = env.create_object()?;
-      for (k, v) in obj.iter() {
-        js_obj.set_named_property(k, value_to_js(env, v)?)?;
-      }
-      js_obj.into_unknown()
+      // For objects we need to convert manually since napi doesn't serialize BTreeMap directly
+      let map: std::collections::HashMap<String, serde_json::Value> = obj
+        .iter()
+        .map(|(k, v)| (k.clone(), value_to_serde_json(v)))
+        .collect();
+      env.to_js_value(&map)?
     }
     Value::Array(arr) => {
-      let mut js_arr = env.create_array_with_length(arr.len())?;
-      for (i, v) in arr.iter().enumerate() {
-        js_arr.set_element(i as u32, value_to_js(env, v)?)?;
-      }
-      js_arr.into_unknown()
+      let vec: Vec<serde_json::Value> = arr.iter().map(|v| value_to_serde_json(v)).collect();
+      env.to_js_value(&vec)?
     }
-    Value::Bool(b) => env.get_boolean(*b)?.into_unknown(),
-    Value::IpAddr(i) => env.create_string(&i.to_string())?.into_unknown(),
-    _ => env.get_null()?.into_unknown(), // PreTokStr and Array not handled directly
+    Value::Bool(b) => env.to_js_value(b)?,
+    Value::IpAddr(i) => env.to_js_value(&i.to_string())?,
+    _ => {
+      env.to_js_value(&())? // () converts to undefined in v3
+    } // PreTokStr and Array not handled directly
   })
 }
 

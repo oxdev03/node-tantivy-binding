@@ -1,6 +1,7 @@
 #![allow(clippy::new_ret_no_self)]
 
-use napi::{Error, JsUnknown, Result, Status};
+use napi::bindgen_prelude::*;
+use napi::{Error, Result, Status};
 use napi_derive::napi;
 
 use crate::{
@@ -164,7 +165,7 @@ impl IndexWriter {
   pub fn delete_documents_by_term(
     &mut self,
     field_name: String,
-    field_value: JsUnknown,
+    field_value: Unknown,
   ) -> Result<u64> {
     let term = crate::make_term(&self.schema, &field_name, field_value)?;
     Ok(self.inner()?.delete_term(term))

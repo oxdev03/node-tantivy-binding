@@ -1,31 +1,34 @@
 [package]
-name = "node-tantivy"
-version = "0.1.0"
-edition = "2021"
 description = "Node.js bindings for Tantivy search engine"
-license = "MIT"
+edition     = "2021"
+license     = "MIT"
+name        = "node-tantivy"
+version     = "0.1.0"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "2.2", default-features = false, features = ["napi8", "serde-json"] }
-napi-derive = "2.2"
+base64 = "0.21"
+chrono = { version = "0.4", features = ["serde"] }
+napi = { version = "3.2", default-features = false, features = [
+  "napi8",
+  "serde-json",
+] }
+napi-derive = "3.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 tantivy = "0.24.2"
-chrono = { version = "0.4", features = ["serde"] }
-base64 = "0.21"
 
 [build-dependencies]
 napi-build = "2.2"
 
 # Optimize for size
 [profile.release]
-opt-level = "z"      # Optimize aggressively for size
-lto = "fat"          # Full link-time optimization
-codegen-units = 1    # Single codegen unit for better optimization
-strip = "symbols"    # Strip debug symbols
-panic = "abort"      # Abort on panic (smaller binary)
-overflow-checks = false  # Disable integer overflow checks
-debug = false        # No debug info
+codegen-units   = 1         # Single codegen unit for better optimization
+debug           = false     # No debug info
+lto             = "fat"     # Full link-time optimization
+opt-level       = "z"       # Optimize aggressively for size
+overflow-checks = false     # Disable integer overflow checks
+panic           = "abort"   # Abort on panic (smaller binary)
+strip           = "symbols" # Strip debug symbols

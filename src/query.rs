@@ -3,7 +3,8 @@ use crate::{
   searcher::DocAddress, to_napi_error, Schema,
 };
 use core::ops::Bound as OpsBound;
-use napi::{Error, JsObject, JsUnknown, Result, Status};
+use napi::bindgen_prelude::*;
+use napi::{Error, Result, Status};
 use napi_derive::napi;
 use tantivy as tv;
 
@@ -57,7 +58,7 @@ impl Query {
   pub fn term_query(
     schema: &Schema,
     field_name: String,
-    field_value: JsUnknown,
+    field_value: Unknown,
     index_option: Option<String>,
   ) -> Result<Query> {
     let index_option = index_option.unwrap_or_else(|| "position".to_string());
@@ -84,7 +85,7 @@ impl Query {
   pub fn term_set_query(
     schema: &Schema,
     field_name: String,
-    field_values: Vec<JsUnknown>,
+    field_values: Vec<Unknown>,
   ) -> Result<Query> {
     let terms = field_values
       .into_iter()
@@ -154,7 +155,7 @@ impl Query {
   pub fn phrase_query(
     schema: &Schema,
     field_name: String,
-    words: Vec<JsUnknown>,
+    words: Vec<Unknown>,
     slop: Option<u32>,
   ) -> Result<Query> {
     let slop = slop.unwrap_or(0);
@@ -179,7 +180,7 @@ impl Query {
 
   /// Construct a Tantivy's BooleanQuery
   #[napi(factory)]
-  pub fn boolean_query(_subqueries: Vec<JsObject>) -> Result<Query> {
+  pub fn boolean_query(_subqueries: Vec<Object>) -> Result<Query> {
     // TODO: Implement proper boolean query construction
     // For now, create a dummy AllQuery
     let inner = tv::query::AllQuery;
@@ -288,8 +289,8 @@ impl Query {
     schema: &Schema,
     field_name: String,
     field_type: FieldType,
-    lower_bound: JsUnknown,
-    upper_bound: JsUnknown,
+    lower_bound: Unknown,
+    upper_bound: Unknown,
     include_lower: Option<bool>,
     include_upper: Option<bool>,
   ) -> Result<Query> {

@@ -1,4 +1,5 @@
-use napi::{Error, JsUnknown, Result, Status};
+use napi::bindgen_prelude::*;
+use napi::{Error, Result, Status};
 use napi_derive::napi;
 use tantivy as tv;
 
@@ -28,7 +29,7 @@ pub(crate) fn get_field(
 pub(crate) fn make_term(
   schema: &tv::schema::Schema,
   field_name: &str,
-  field_value: JsUnknown,
+  field_value: Unknown,
 ) -> Result<tv::Term> {
   let field = get_field(schema, field_name)?;
   let field_entry = schema.get_field_entry(field);
@@ -69,7 +70,7 @@ pub(crate) fn make_term(
       Ok(tv::Term::from_field_bytes(field, str_val.as_bytes()))
     }
     crate::schema::FieldType::Bool => {
-      let bool_val = field_value.coerce_to_bool()?.get_value()?;
+      let bool_val = field_value.coerce_to_bool()?;
       Ok(tv::Term::from_field_bool(field, bool_val))
     }
     crate::schema::FieldType::IpAddr => {
@@ -95,7 +96,7 @@ pub(crate) fn make_term_for_type(
   schema: &tv::schema::Schema,
   field_name: &str,
   field_type: crate::schema::FieldType,
-  field_value: JsUnknown,
+  field_value: Unknown,
 ) -> Result<tv::Term> {
   let field = get_field(schema, field_name)?;
 
@@ -133,7 +134,7 @@ pub(crate) fn make_term_for_type(
       Ok(tv::Term::from_field_bytes(field, str_val.as_bytes()))
     }
     crate::schema::FieldType::Bool => {
-      let bool_val = field_value.coerce_to_bool()?.get_value()?;
+      let bool_val = field_value.coerce_to_bool()?;
       Ok(tv::Term::from_field_bool(field, bool_val))
     }
     crate::schema::FieldType::IpAddr => {

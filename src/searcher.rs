@@ -1,7 +1,8 @@
 #![allow(clippy::new_ret_no_self)]
 
 use crate::{document::Document, query::Query};
-use napi::{Error, JsUnknown, Result, Status};
+use napi::bindgen_prelude::*;
+use napi::{Error, Result, Status};
 use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use tantivy as tv;
@@ -178,7 +179,7 @@ impl Searcher {
   }
 
   #[napi]
-  pub fn aggregate(&self, query: &Query, agg: JsUnknown) -> Result<String> {
+  pub fn aggregate(&self, query: &Query, agg: Unknown) -> Result<String> {
     // Convert the JS object to JSON string first
     let agg_str = agg.coerce_to_string()?.into_utf8()?.into_owned()?;
 
@@ -218,7 +219,7 @@ impl Searcher {
   /// Return the overall number of documents containing
   /// the given term.
   #[napi]
-  pub fn doc_freq(&self, field_name: String, field_value: JsUnknown) -> Result<u32> {
+  pub fn doc_freq(&self, field_name: String, field_value: Unknown) -> Result<u32> {
     // Wrap the tantivy Searcher `doc_freq` method to return a Result.
     let schema = self.inner.schema();
     let term = crate::make_term(schema, &field_name, field_value)?;

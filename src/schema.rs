@@ -4,7 +4,7 @@ use tantivy::schema::Schema as TantivySchema;
 
 /// Tantivy's FieldType
 #[napi]
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum FieldType {
   Str,
   U64,
