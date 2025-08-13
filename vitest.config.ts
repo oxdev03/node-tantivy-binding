@@ -8,5 +8,8 @@ export default defineConfig({
     teardownTimeout: 10000,
     globals: true,
     include: ['__test__/**/*.{test,spec}.{js,ts}'],
+    benchmark: {
+      include: ['benchmark/**/*.{bench,benchmark}.{js,ts}'],
+    },
   },
 })
