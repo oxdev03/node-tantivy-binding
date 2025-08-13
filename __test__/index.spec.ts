@@ -959,11 +959,7 @@ describe('TestClass', () => {
     )
 
     const listOfJsons = [{ hello: 'world' }, { nested: { hello: ['world', '!'] }, numbers: [1, 2, 3] }]
-    // Note: Node.js version doesn't support arrays as JSON field values (unlike Python)
-    // This would throw in Node.js version
-    expect(() => {
-      Document.fromDict({ json: listOfJsons }, schema)
-    }).toThrow(/Array is not supported/)
+    Document.fromDict({ json: listOfJsons }, schema)
 
     Document.fromDict({ json: JSON.stringify(listOfJsons[1]) }, schema)
 
