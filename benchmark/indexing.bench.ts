@@ -22,7 +22,7 @@ describe('Indexing Performance', () => {
   afterEach(() => {
     try {
       rmSync(tempDir, { recursive: true, force: true })
-    } catch (e) {
+    } catch {
       // Ignore cleanup errors
     }
   })

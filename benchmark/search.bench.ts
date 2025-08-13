@@ -59,7 +59,7 @@ describe('Search Performance', () => {
   afterAll(() => {
     try {
       rmSync(tempDir, { recursive: true, force: true })
-    } catch (e) {
+    } catch {
       // Ignore cleanup errors
     }
   })

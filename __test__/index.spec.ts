@@ -16,7 +16,6 @@ import {
   TextAnalyzerBuilder,
   Facet,
   DocAddress,
-  Explanation,
 } from '../index'
 
 import {
