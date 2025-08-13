@@ -4,13 +4,19 @@ use tantivy::schema::Facet as TantivyFacet;
 
 /// Represents a facet in Tantivy.
 /// 
-/// Facets are used for hierarchical faceting, allowing you to organize documents
-/// into a tree-like structure for filtering and navigation.
+/// A Facet represent a point in a given hierarchy.
+/// They are typically represented similarly to a filepath. For instance, an
+/// e-commerce website could have a Facet for /electronics/tv_and_video/led_tv.
+/// 
+/// A document can be associated to any number of facets. The hierarchy
+/// implicitely imply that a document belonging to a facet also belongs to the
+/// ancestor of its facet. In the example above, /electronics/tv_and_video/
+/// and /electronics.
 /// 
 /// Example:
 /// ```javascript
-/// const facet = Facet.fromText("/category/electronics/smartphones");
-/// console.log(facet.toString()); // "/category/electronics/smartphones"
+/// const facet = Facet.fromString("/category/electronics/smartphones");
+/// console.log(facet.toPathStr()); // "/category/electronics/smartphones"
 /// ```
 #[napi]
 pub struct Facet {
@@ -19,19 +25,50 @@ pub struct Facet {
 
 #[napi]
 impl Facet {
-    /// Create a facet from a text representation.
-    /// 
-    /// @param facet_string - The facet path as a string (e.g., "/category/electronics/phones")
-    /// @returns A new Facet instance
+    /// Creates a `Facet` from its binary representation.
     #[napi(factory)]
-    pub fn from_text(facet_string: String) -> Result<Facet> {
-        let facet = TantivyFacet::from_text(&facet_string).map_err(|e| {
+    pub fn from_encoded(encoded_bytes: Vec<u8>) -> Result<Facet> {
+        let inner = TantivyFacet::from_encoded(encoded_bytes).map_err(|e| {
             Error::new(
                 Status::InvalidArg,
-                format!("Invalid facet string: {}", e),
+                format!("Invalid encoded facet: {}", e),
             )
         })?;
-        Ok(Facet { inner: facet })
+        Ok(Facet { inner })
+    }
+
+    /// Create a new instance of the "root facet" Equivalent to /.
+    #[napi(factory)]
+    pub fn root() -> Facet {
+        Facet {
+            inner: TantivyFacet::root(),
+        }
+    }
+
+    /// Returns true if the facet is the root facet /.
+    #[napi(getter)]
+    pub fn is_root(&self) -> bool {
+        self.inner.is_root()
+    }
+
+    /// Returns true if another Facet is a subfacet of this facet.
+    /// 
+    /// @param other - The Facet that we should check if this facet is a subset of.
+    /// @returns True if this facet is a prefix of the other
+    #[napi]
+    pub fn is_prefix_of(&self, other: &Facet) -> bool {
+        self.inner.is_prefix_of(&other.inner)
+    }
+
+    /// Create a Facet object from a string.
+    /// 
+    /// @param facet_string - The string that contains a facet.
+    /// @returns The created Facet.
+    #[napi(factory)]
+    pub fn from_string(facet_string: String) -> Facet {
+        Facet {
+            inner: TantivyFacet::from(facet_string.as_str()),
+        }
     }
 
     /// Create a facet from an array of path segments.
@@ -44,45 +81,29 @@ impl Facet {
         Facet { inner: facet }
     }
 
+    /// Returns the list of `segments` that forms a facet path.
+    /// 
+    /// For instance `//europe/france` becomes `["europe", "france"]`.
+    /// @returns Array of path segments
+    #[napi]
+    pub fn to_path(&self) -> Vec<String> {
+        self.inner.to_path().into_iter().map(|s| s.to_string()).collect()
+    }
+
+    /// Returns the facet string representation.
+    /// 
+    /// @returns The facet path as a string
+    #[napi]
+    pub fn to_path_str(&self) -> String {
+        self.inner.to_string()
+    }
+
     /// Convert the facet to its string representation.
     /// 
     /// @returns The facet path as a string
     #[napi]
     pub fn to_string(&self) -> String {
         self.inner.to_string()
-    }
-
-    /// Get the path segments of the facet.
-    /// 
-    /// @returns Array of path segments
-    #[napi]
-    pub fn to_path(&self) -> Vec<String> {
-        self.inner.to_path().map(|s| s.to_string()).collect()
-    }
-
-    /// Check if this facet is a prefix of another facet.
-    /// 
-    /// @param other - The other facet to compare against
-    /// @returns True if this facet is a prefix of the other
-    #[napi]
-    pub fn is_prefix_of(&self, other: &Facet) -> bool {
-        self.inner.is_prefix_of(&other.inner)
-    }
-
-    /// Get the parent facet (one level up in the hierarchy).
-    /// 
-    /// @returns The parent facet, or null if this is the root
-    #[napi]
-    pub fn parent(&self) -> Option<Facet> {
-        self.inner.parent().map(|parent| Facet { inner: parent })
-    }
-
-    /// Get the depth of the facet (number of path segments).
-    /// 
-    /// @returns The depth of the facet
-    #[napi]
-    pub fn depth(&self) -> u32 {
-        self.inner.to_path().len() as u32
     }
 }
 

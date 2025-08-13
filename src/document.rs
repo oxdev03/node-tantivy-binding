@@ -173,9 +173,7 @@ impl Document {
     /// @param value - The Facet that will be added to the document.
     #[napi]
     pub fn add_facet(&mut self, field_name: String, facet_path: String) -> Result<()> {
-        let facet = tv::schema::Facet::from_text(&facet_path).map_err(|e| {
-            Error::new(Status::InvalidArg, format!("Invalid facet path: {}", e))
-        })?;
+        let facet = tv::schema::Facet::from(facet_path.as_str());
         self.add_value(field_name, facet);
         Ok(())
     }
@@ -517,7 +515,7 @@ fn extract_value_for_type(
         tv::schema::Type::Facet => {
             let s: JsString = unsafe { any.cast() };
             let s = s.into_utf8()?.as_str()?.to_string();
-            Value::Facet(tv::schema::Facet::from_text(&s).map_err(to_napi_error)?)
+            Value::Facet(tv::schema::Facet::from(s.as_str()))
         }
         tv::schema::Type::Bytes => {
             let buf: JsBuffer = unsafe { any.cast() };

@@ -15,6 +15,7 @@ import {
   FilterStatic,
   SnippetGenerator,
   TextAnalyzerBuilder,
+  Facet,
 } from '../index'
 
 interface TestDoc {
@@ -1781,5 +1782,59 @@ describe('TestTokenizers', () => {
     index.reload()
     result = index.searcher().search(query)
     expect(result.count).toBe(0)
+  })
+})
+
+describe('TestFacet', () => {
+  it('test_facet_api', () => {
+    // Test basic Facet API that matches Python implementation
+    
+    // Test root facet
+    const rootFacet = Facet.root()
+    expect(rootFacet.isRoot).toBe(true)
+    expect(rootFacet.toPathStr()).toBe('/')
+    
+    // Test fromString (equivalent to Python from_string)
+    const facet = Facet.fromString('/electronics/computers/laptops')
+    expect(facet.isRoot).toBe(false)
+    expect(facet.toPathStr()).toBe('/electronics/computers/laptops')
+    expect(facet.toString()).toBe('/electronics/computers/laptops')
+    
+    // Test toPath (should return path segments)
+    const pathSegments = facet.toPath()
+    expect(pathSegments).toEqual(['electronics', 'computers', 'laptops'])
+    
+    // Test fromPath
+    const facetFromPath = Facet.fromPath(['books', 'fiction', 'scifi'])
+    expect(facetFromPath.toPathStr()).toBe('/books/fiction/scifi')
+    expect(facetFromPath.toPath()).toEqual(['books', 'fiction', 'scifi'])
+    
+    // Test isPrefixOf
+    const parentFacet = Facet.fromString('/electronics')
+    const childFacet = Facet.fromString('/electronics/computers')
+    expect(parentFacet.isPrefixOf(childFacet)).toBe(true)
+    expect(childFacet.isPrefixOf(parentFacet)).toBe(false)
+    expect(rootFacet.isPrefixOf(facet)).toBe(true)
+    
+    // Test that we can use facets in documents (integration test)
+    const schema = new SchemaBuilder()
+      .addTextField('title', { stored: true })
+      .addFacetField('category')
+      .build()
+    
+    const index = new Index(schema)
+    const writer = index.writer()
+    
+    const doc = new Document()
+    doc.addText('title', 'Test Product')
+    doc.addFacet('category', facet.toPathStr()) // Use our facet
+    writer.addDocument(doc)
+    writer.commit()
+    index.reload()
+    
+    // Verify the document was indexed
+    const query = index.parseQuery('Test', ['title'])
+    const result = index.searcher().search(query)
+    expect(result.hits.length).toBe(1)
   })
 })

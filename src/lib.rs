@@ -156,6 +156,7 @@ pub mod snippet;
 pub mod tokenizer;
 pub mod parser_error;
 pub mod index;
+pub mod facet;
 pub use schemabuilder::SchemaBuilder;
 pub use schema::{Schema, FieldType};
 pub use document::Document;
@@ -171,3 +172,4 @@ pub use parser_error::{
     DateFormatError, FacetFormatError, IpFormatError
 };
 pub use index::{Index, IndexWriter};
+pub use facet::Facet;

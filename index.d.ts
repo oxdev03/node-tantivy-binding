@@ -894,3 +894,69 @@ export declare class Index {
    */
   registerTokenizer(name: string, analyzer: CrateTextAnalyzer): void
 }
+/**
+ * Represents a facet in Tantivy.
+ *
+ * A Facet represent a point in a given hierarchy.
+ * They are typically represented similarly to a filepath. For instance, an
+ * e-commerce website could have a Facet for /electronics/tv_and_video/led_tv.
+ *
+ * A document can be associated to any number of facets. The hierarchy
+ * implicitely imply that a document belonging to a facet also belongs to the
+ * ancestor of its facet. In the example above, /electronics/tv_and_video/
+ * and /electronics.
+ *
+ * Example:
+ * ```javascript
+ * const facet = Facet.fromString("/category/electronics/smartphones");
+ * console.log(facet.toPathStr()); // "/category/electronics/smartphones"
+ * ```
+ */
+export declare class Facet {
+  /** Creates a `Facet` from its binary representation. */
+  static fromEncoded(encodedBytes: Array<number>): Facet
+  /** Create a new instance of the "root facet" Equivalent to /. */
+  static root(): Facet
+  /** Returns true if the facet is the root facet /. */
+  get isRoot(): boolean
+  /**
+   * Returns true if another Facet is a subfacet of this facet.
+   *
+   * @param other - The Facet that we should check if this facet is a subset of.
+   * @returns True if this facet is a prefix of the other
+   */
+  isPrefixOf(other: Facet): boolean
+  /**
+   * Create a Facet object from a string.
+   *
+   * @param facet_string - The string that contains a facet.
+   * @returns The created Facet.
+   */
+  static fromString(facetString: string): Facet
+  /**
+   * Create a facet from an array of path segments.
+   *
+   * @param path - Array of path segments (e.g., ["category", "electronics", "phones"])
+   * @returns A new Facet instance
+   */
+  static fromPath(path: Array<string>): Facet
+  /**
+   * Returns the list of `segments` that forms a facet path.
+   *
+   * For instance `//europe/france` becomes `["europe", "france"]`.
+   * @returns Array of path segments
+   */
+  toPath(): Array<string>
+  /**
+   * Returns the facet string representation.
+   *
+   * @returns The facet path as a string
+   */
+  toPathStr(): string
+  /**
+   * Convert the facet to its string representation.
+   *
+   * @returns The facet path as a string
+   */
+  toString(): string
+}
