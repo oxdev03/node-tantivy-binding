@@ -38,7 +38,7 @@ describe('TestJsonBug', () => {
       const doc = searcher.doc(hit.docAddress)
       const docDict = doc.toDict() as any
       console.log('Actual data structure:', JSON.stringify(docDict.data, null, 2))
-      
+
       // With array support added, JSON fields should be stored as arrays like other fields
       expect(docDict.data).toEqual([
         {

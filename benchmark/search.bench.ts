@@ -20,7 +20,7 @@ describe('Search Performance', () => {
       .addIntegerField('id', { stored: true, indexed: true })
       .addIntegerField('score', { stored: true, indexed: true })
       .build()
-    
+
     index = new Index(schema, tempDir)
     const writer = index.writer()
 
@@ -29,29 +29,32 @@ describe('Search Performance', () => {
     const titles = [
       'Introduction to Machine Learning',
       'Advanced Database Systems',
-      'Web Development Best Practices', 
+      'Web Development Best Practices',
       'Data Science Fundamentals',
       'Software Engineering Principles',
       'Mobile App Development',
       'Cloud Computing Essentials',
       'Cybersecurity Basics',
       'Artificial Intelligence Overview',
-      'Blockchain Technology'
+      'Blockchain Technology',
     ]
 
     for (let i = 0; i < 10000; i++) {
       const doc = new Document()
       const titleIndex = i % titles.length
       const categoryIndex = i % categories.length
-      
+
       doc.addText('title', `${titles[titleIndex]} ${i}`)
-      doc.addText('body', `This is document ${i} about ${titles[titleIndex].toLowerCase()}. It contains detailed information and examples. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`)
+      doc.addText(
+        'body',
+        `This is document ${i} about ${titles[titleIndex].toLowerCase()}. It contains detailed information and examples. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`,
+      )
       doc.addText('category', categories[categoryIndex])
       doc.addInteger('id', i)
       doc.addInteger('score', Math.floor(Math.random() * 100))
       writer.addDocument(doc)
     }
-    
+
     writer.commit()
     searcher = index.searcher()
   })
@@ -107,7 +110,7 @@ describe('Search Performance', () => {
   bench('Search with explain (debugging overhead)', () => {
     const query = index.parseQuery('machine learning', ['title', 'body'])
     const results = searcher.search(query, 5)
-    
+
     // Explain top results
     for (const hit of results.hits.slice(0, 3)) {
       query.explain(searcher, hit.address)

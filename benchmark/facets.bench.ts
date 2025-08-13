@@ -21,7 +21,7 @@ describe('Facet Operations Performance', () => {
       .addFacetField('author')
       .addIntegerField('year', { stored: true, indexed: true })
       .build()
-    
+
     index = new Index(schema, tempDir)
     const writer = index.writer()
 
@@ -33,7 +33,7 @@ describe('Facet Operations Performance', () => {
       ['/science/physics', '/research/quantum'],
       ['/business/startup', '/finance/venture'],
       ['/entertainment/movies', '/review/critic'],
-      ['/sports/football', '/analysis/statistics']
+      ['/sports/football', '/analysis/statistics'],
     ]
 
     for (let i = 0; i < 5000; i++) {
@@ -41,21 +41,21 @@ describe('Facet Operations Performance', () => {
       const categoryIndex = i % categories.length
       const authorIndex = i % authors.length
       const tagSetIndex = i % tagSets.length
-      
+
       doc.addText('title', `Document ${i}`)
       doc.addText('body', `Content for document ${i} in category ${categories[categoryIndex]}`)
       doc.addFacet('category', `/category/${categories[categoryIndex]}`)
       doc.addFacet('author', `/author/${authors[authorIndex]}`)
       doc.addInteger('year', 2020 + (i % 5))
-      
+
       // Add multiple tags
       for (const tag of tagSets[tagSetIndex]) {
         doc.addFacet('tags', tag)
       }
-      
+
       writer.addDocument(doc)
     }
-    
+
     writer.commit()
     searcher = index.searcher()
   })
@@ -104,7 +104,7 @@ describe('Facet Operations Performance', () => {
 
   bench('Facet aggregation simulation (multiple searches)', () => {
     const categories = ['technology', 'science', 'business', 'entertainment', 'sports']
-    
+
     // Simulate facet counting by doing multiple searches
     for (const category of categories) {
       const query = index.parseQuery(`category:/category/${category}`, [])
@@ -113,7 +113,10 @@ describe('Facet Operations Performance', () => {
   })
 
   bench('Multi-level facet filtering', () => {
-    const query = index.parseQuery('category:/category/technology AND tags:/programming/javascript AND author:/author/alice', [])
+    const query = index.parseQuery(
+      'category:/category/technology AND tags:/programming/javascript AND author:/author/alice',
+      [],
+    )
     searcher.search(query, 10)
   })
 

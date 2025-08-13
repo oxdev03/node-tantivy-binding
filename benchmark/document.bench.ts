@@ -44,7 +44,7 @@ describe('Document Operations Performance', () => {
     doc.addText('title', 'Document with Many Facets')
     doc.addText('body', 'This document tests facet performance.')
     doc.addInteger('id', 1)
-    
+
     // Add 50 facets
     for (let i = 0; i < 50; i++) {
       doc.addFacet('tags', `/category${i % 10}/subcategory${i % 5}/item${i}`)
@@ -59,7 +59,7 @@ describe('Document Operations Performance', () => {
     doc.addInteger('id', 42)
     doc.addFloat('score', 95.5)
     doc.addDate('created_at', '2024-01-15T10:30:00Z')
-    
+
     // Test data conversion overhead
     JSON.stringify({
       title: 'Serialization Test Document',
@@ -68,17 +68,17 @@ describe('Document Operations Performance', () => {
       id: 42,
       score: 95.5,
       created_at: '2024-01-15T10:30:00Z',
-      tags: ['/test/serialization', '/type/benchmark']
+      tags: ['/test/serialization', '/type/benchmark'],
     })
   })
 
   bench('Document field access patterns', () => {
     const doc = new Document()
-    
+
     // Test different ways of adding the same type of field
     const fieldNames = ['field1', 'field2', 'field3', 'field4', 'field5']
     const values = ['value1', 'value2', 'value3', 'value4', 'value5']
-    
+
     for (let i = 0; i < fieldNames.length; i++) {
       doc.addText(fieldNames[i], values[i])
     }

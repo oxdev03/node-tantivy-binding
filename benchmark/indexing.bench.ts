@@ -29,7 +29,7 @@ describe('Indexing Performance', () => {
 
   bench('Index 100 small documents', () => {
     const writer = index.writer()
-    
+
     for (let i = 0; i < 100; i++) {
       const doc = new Document()
       doc.addText('title', `Document ${i}`)
@@ -37,13 +37,13 @@ describe('Indexing Performance', () => {
       doc.addInteger('id', i)
       writer.addDocument(doc)
     }
-    
+
     writer.commit()
   })
 
   bench('Index 1000 small documents', () => {
     const writer = index.writer()
-    
+
     for (let i = 0; i < 1000; i++) {
       const doc = new Document()
       doc.addText('title', `Document ${i}`)
@@ -51,14 +51,14 @@ describe('Indexing Performance', () => {
       doc.addInteger('id', i)
       writer.addDocument(doc)
     }
-    
+
     writer.commit()
   })
 
   bench('Index 100 large documents', () => {
     const writer = index.writer()
     const largeText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(100)
-    
+
     for (let i = 0; i < 100; i++) {
       const doc = new Document()
       doc.addText('title', `Large Document ${i}`)
@@ -66,13 +66,13 @@ describe('Indexing Performance', () => {
       doc.addInteger('id', i)
       writer.addDocument(doc)
     }
-    
+
     writer.commit()
   })
 
   bench('Batch commit vs individual commits (100 docs)', () => {
     const writer = index.writer()
-    
+
     // Batch commit
     for (let i = 0; i < 100; i++) {
       const doc = new Document()
