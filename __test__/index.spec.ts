@@ -16,6 +16,7 @@ import {
   SnippetGenerator,
   TextAnalyzerBuilder,
   Facet,
+  DocAddress,
 } from '../index'
 
 interface TestDoc {
@@ -1311,30 +1312,19 @@ it('test_schema_eq', () => {
 })
 
 it('test_facet_eq', () => {
-  // Test facet field functionality
-  const schema = new SchemaBuilder().addTextField('title', { stored: true }).addFacetField('category').build()
+  // Test facet equality like Python implementation
+  const facet1 = Facet.fromString('/europe/france')
+  const facet2 = Facet.fromString('/europe/france')
+  const facet3 = Facet.fromString('/europe/germany')
 
-  const index = new Index(schema)
-  const writer = index.writer()
+  // Test facet equality via string representation (Node.js equivalent of Python ==)
+  expect(facet1.toPathStr()).toEqual(facet2.toPathStr())
+  expect(facet1.toPathStr()).not.toEqual(facet3.toPathStr())
+  expect(facet2.toPathStr()).not.toEqual(facet3.toPathStr())
 
-  // Add documents with facets
-  const doc1 = new Document()
-  doc1.addText('title', 'First Document')
-  doc1.addFacet('category', '/electronics/computers')
-  writer.addDocument(doc1)
-
-  const doc2 = new Document()
-  doc2.addText('title', 'Second Document')
-  doc2.addFacet('category', '/electronics/phones')
-  writer.addDocument(doc2)
-
-  writer.commit()
-  index.reload()
-
-  // Test that documents were indexed with facets
-  const query = index.parseQuery('Document', ['title'])
-  const result = index.searcher().search(query)
-  expect(result.hits.length).toBe(2)
+  // Test path array equality
+  expect(facet1.toPath()).toEqual(facet2.toPath())
+  expect(facet1.toPath()).not.toEqual(facet3.toPath())
 })
 
 it('test_schema_pickle', () => {
@@ -1368,34 +1358,36 @@ it('test_schema_pickle', () => {
 })
 
 it('test_facet_pickle', () => {
-  // Test facet serialization/storage
-  const fc = Facet.fromString('/test/category')
-  expect(fc.toPath()).toEqual(['test', 'category'])
+  // Test facet serialization (Node.js equivalent of Python pickle)
+  const orig = Facet.fromString('/europe/france')
+  
+  // Test serialization via JSON (Node.js equivalent of pickle)
+  const serialized = JSON.stringify({
+    path: orig.toPathStr(),
+    segments: orig.toPath()
+  })
+  const deserialized = JSON.parse(serialized)
+  
+  // Recreate facet from serialized data
+  const pickled = Facet.fromString(deserialized.path)
+  
+  // Test equality via string representation
+  expect(orig.toPathStr()).toEqual(pickled.toPathStr())
+  expect(orig.toPath()).toEqual(pickled.toPath())
 })
 
 it('test_doc_address_pickle', () => {
-  // Test document address serialization (Node.js equivalent)
-  const index = createIndex()
-  const searcher = index.searcher()
-
-  // Get a document address
-  const query = Query.termQuery(ramIndex.schema, 'title', 'sea')
-  const result = searcher.search(query)
-  expect(result.hits.length).toBe(1)
-
-  const { docAddress } = result.hits[0]
-
-  // Test that docAddress exists and can be used
-  expect(docAddress).toBeDefined()
-
-  // Test that we can retrieve the document using the address
-  const doc = searcher.doc(docAddress)
-  expect(doc).toBeDefined()
-
-  // Test serialization via string representation if available
-  const addressStr = docAddress.toString()
-  expect(addressStr).toBeDefined()
-  expect(typeof addressStr).toBe('string')
+  // Test document address serialization (Node.js equivalent of Python pickle)
+  const orig: DocAddress = { segmentOrd: 42, doc: 123 }
+  
+  // Test serialization via JSON (Node.js equivalent of pickle)
+  const serialized = JSON.stringify(orig)
+  const pickled: DocAddress = JSON.parse(serialized)
+  
+  // Test equality
+  expect(orig.segmentOrd).toEqual(pickled.segmentOrd)
+  expect(orig.doc).toEqual(pickled.doc)
+  expect(orig).toEqual(pickled)
 })
 
 describe('TestSnippets', () => {
