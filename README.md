@@ -1,85 +1,132 @@
-# `@napi-rs/package-template`
+# node-tantivy-binding
 
-![https://github.com/napi-rs/package-template/actions](https://github.com/napi-rs/package-template/workflows/CI/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Template project for writing node packages with napi-rs.
+Node.js bindings for [Tantivy](https://github.com/quickwit-oss/tantivy), the full-text search engine library written in Rust.
 
-# Usage
+This project is a Node.js port of [tantivy-py](https://github.com/quickwit-inc/tantivy-py), providing JavaScript/TypeScript bindings for the Tantivy search engine. The implementation closely follows the Python API to maintain consistency across language bindings.
 
-1. Click **Use this template**.
-2. **Clone** your project.
-3. Run `yarn install` to install dependencies.
-4. Run `yarn napi rename -n [@your-scope/package-name] -b [binary-name]` command under the project folder to rename your package.
+⚠️ **Note**: This is a first draft implementation ported from tantivy-py (see submodule hash). There may be unidentified bugs. The test suite is also based on tantivy-py. Furthermore not all future api changes will be reflected in this binding. 
 
-## Install this test package
+# Installation
 
-```
-yarn add @napi-rs/package-template
-```
-
-## Ability
-
-### Build
-
-After `yarn build/npm run build` command, you can see `package-template.[darwin|win32|linux].node` file in project root. This is the native addon built from [lib.rs](./src/lib.rs).
-
-### Test
-
-With [ava](https://github.com/avajs/ava), run `yarn test/npm run test` to testing native addon. You can also switch to another testing framework if you want.
-
-### CI
-
-With GitHub Actions, each commit and pull request will be built and tested automatically in [`node@20`, `@node22`] x [`macOS`, `Linux`, `Windows`] matrix. You will never be afraid of the native addon broken in these platforms.
-
-### Release
-
-Release native package is very difficult in old days. Native packages may ask developers who use it to install `build toolchain` like `gcc/llvm`, `node-gyp` or something more.
-
-With `GitHub actions`, we can easily prebuild a `binary` for major platforms. And with `N-API`, we should never be afraid of **ABI Compatible**.
-
-The other problem is how to deliver prebuild `binary` to users. Downloading it in `postinstall` script is a common way that most packages do it right now. The problem with this solution is it introduced many other packages to download binary that has not been used by `runtime codes`. The other problem is some users may not easily download the binary from `GitHub/CDN` if they are behind a private network (But in most cases, they have a private NPM mirror).
-
-In this package, we choose a better way to solve this problem. We release different `npm packages` for different platforms. And add it to `optionalDependencies` before releasing the `Major` package to npm.
-
-`NPM` will choose which native package should download from `registry` automatically. You can see [npm](./npm) dir for details. And you can also run `yarn add @napi-rs/package-template` to see how it works.
-
-## Develop requirements
-
-- Install the latest `Rust`
-- Install `Node.js@10+` which fully supported `Node-API`
-- Install `yarn@1.x`
-
-## Test in local
-
-- yarn
-- yarn build
-- yarn test
-
-And you will see:
+The bindings can be installed using npm:
 
 ```bash
-$ ava --verbose
-
-  ✔ sync function from native code
-  ✔ sleep function from native code (201ms)
-  ─
-
-  2 tests passed
-✨  Done in 1.12s.
+npm install node-tantivy-binding
 ```
 
-## Release package
+If no binary is present for your operating system, the bindings will be built from source, which requires Rust to be installed.
 
-Ensure you have set your **NPM_TOKEN** in the `GitHub` project setting.
+# Quick Start
 
-In `Settings -> Secrets`, add **NPM_TOKEN** into it.
+```javascript
+import { SchemaBuilder, FieldType, Index, Document } from 'node-tantivy-binding';
 
-When you want to release the package:
+// Create a schema
+const schema = new SchemaBuilder()
+  .addTextField('title', { stored: true })
+  .addTextField('body', { stored: true })
+  .build();
 
+// Create an index
+const index = new Index(schema);
+const writer = index.writer();
+
+// Add documents
+const doc1 = new Document();
+doc1.addText('title', 'The Old Man and the Sea');
+doc1.addText('body', 'He was an old man who fished alone in a skiff in the Gulf Stream.');
+writer.addDocument(doc1);
+writer.commit();
+
+// Search
+const searcher = index.searcher();
+const query = index.parseQuery('sea', ['title', 'body']);
+const results = searcher.search(query, 10);
+
+console.log('Found', results.hits.length, 'results');
 ```
-npm version [<newversion> | major | minor | patch | premajor | preminor | prepatch | prerelease [--preid=<prerelease-id>] | from-git]
 
-git push
+# Features
+
+This Node.js binding provides access to most of Tantivy's functionality:
+
+- **Full-text search** with BM25 scoring
+- **Structured queries** with boolean operations
+- **Faceted search** for filtering and aggregation  
+- **Snippet generation** for search result highlighting
+- **Query explanation** for debugging relevance scoring
+- **Multiple field types**: text, integers, floats, dates, facets
+- **Flexible tokenization** and text analysis
+- **JSON document support**
+
+## API Compatibility
+
+The API closely follows [tantivy-py](https://github.com/quickwit-inc/tantivy-py) to maintain consistency:
+
+- Same class names and method signatures where possible
+- Compatible document and query structures
+- Equivalent search result formats
+- Similar configuration options
+
+# Development
+
+## Requirements
+
+- Install the latest `Rust` (required for building from source)
+- Install `Node.js@22+` which fully supports `Node-API`
+- Install `yarn`
+
+## Building from Source
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd node-tantivy-binding
+
+# Install dependencies
+npm install
+
+# Build the native module
+npm run build
+
+# Run tests
+npm test
 ```
 
-GitHub actions will do the rest job for you.
+## Testing
+
+The project includes a comprehensive test suite migrated from tantivy-py:
+
+```bash
+npm test
+```
+
+## Project Status
+
+This is a **first draft** port of tantivy-py to Node.js. While the core functionality works, please be aware:
+
+- ⚠️ **Potential bugs**: Some edge cases may not be handled correctly
+  - Due to different type casting
+  - Missing error mapping
+  - Usage of napi-rs v2 instead of v3
+- 🔄 **API changes**: The API may evolve in future versions
+
+## Architecture
+
+Built with:
+- **[napi-rs](https://napi.rs/)**: For Node.js ↔ Rust bindings
+- **[Tantivy](https://github.com/quickwit-oss/tantivy)**: The underlying search engine
+- **TypeScript**: Full type definitions included
+- **Vitest**: For testing
+
+## Acknowledgments
+
+This project is heavily inspired by and based on:
+- [tantivy-py](https://github.com/quickwit-inc/tantivy-py) - Python bindings for Tantivy
+- [Tantivy](https://github.com/quickwit-oss/tantivy) - The core search engine library
+
+## License
+
+MIT License - see LICENSE file for details.
