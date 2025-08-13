@@ -16,6 +16,7 @@ import {
   TextAnalyzerBuilder,
   Facet,
   DocAddress,
+  Explanation,
 } from '../index'
 
 import {
@@ -422,6 +423,36 @@ describe('TestClass', () => {
 
   it.skip('test_query_lenient', () => {
     // This functionality is not available in the node binding yet.
+  })
+
+  it('test_query_explain', () => {
+    // Search for something that will actually return results
+    const query = ramIndex.parseQuery('title:sea OR body:fish', ['title', 'body'])
+    const searcher = ramIndex.searcher()
+    const result = searcher.search(query, 10)
+
+    // Should have at least one result (The Old Man and the Sea)
+    expect(result.hits.length).toBeGreaterThan(0)
+
+    const { docAddress } = result.hits[0]
+
+    // Test the explain() method
+    const explanation = query.explain(searcher, docAddress)
+    const jsonOutput = explanation.toJson()
+    expect(typeof jsonOutput).toBe('string')
+    expect(jsonOutput.length).toBeGreaterThan(0)
+    // The JSON should contain score information
+    expect(jsonOutput).toMatch(/"value"|value/)
+
+    // Test the value method
+    const scoreValue = explanation.value()
+    expect(typeof scoreValue).toBe('number')
+    expect(scoreValue).toBeGreaterThan(0)
+
+    // Test the toString method
+    const stringOutput = explanation.toString()
+    expect(typeof stringOutput).toBe('string')
+    expect(stringOutput).toContain('Explanation')
   })
 
   it('test_order_by_search', () => {

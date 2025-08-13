@@ -157,6 +157,7 @@ pub mod tokenizer;
 pub mod parser_error;
 pub mod index;
 pub mod facet;
+pub mod explanation;
 pub use schemabuilder::SchemaBuilder;
 pub use schema::{Schema, FieldType};
 pub use document::Document;

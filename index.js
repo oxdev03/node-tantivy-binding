@@ -310,7 +310,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { getVersion, SchemaBuilder, FieldType, Schema, Document, Occur, Query, Searcher, Order, Snippet, SnippetGenerator, Tokenizer, TokenizerStatic, Filter, FilterStatic, TextAnalyzer, TextAnalyzerBuilder, SyntaxError, UnsupportedQueryError, FieldDoesNotExistError, ExpectedIntError, ExpectedBase64Error, ExpectedFloatError, ExpectedBoolError, AllButQueryForbiddenError, NoDefaultFieldDeclaredError, FieldNotIndexedError, FieldDoesNotHavePositionsIndexedError, PhrasePrefixRequiresAtLeastTwoTermsError, UnknownTokenizerError, RangeMustNotHavePhraseError, DateFormatError, FacetFormatError, IpFormatError, IndexWriter, Index, Facet } = nativeBinding
+const { getVersion, SchemaBuilder, FieldType, Schema, Document, Occur, Query, Searcher, Order, Snippet, SnippetGenerator, Tokenizer, TokenizerStatic, Filter, FilterStatic, TextAnalyzer, TextAnalyzerBuilder, SyntaxError, UnsupportedQueryError, FieldDoesNotExistError, ExpectedIntError, ExpectedBase64Error, ExpectedFloatError, ExpectedBoolError, AllButQueryForbiddenError, NoDefaultFieldDeclaredError, FieldNotIndexedError, FieldDoesNotHavePositionsIndexedError, PhrasePrefixRequiresAtLeastTwoTermsError, UnknownTokenizerError, RangeMustNotHavePhraseError, DateFormatError, FacetFormatError, IpFormatError, IndexWriter, Index, Facet, Explanation } = nativeBinding
 
 module.exports.getVersion = getVersion
 module.exports.SchemaBuilder = SchemaBuilder
@@ -349,3 +349,4 @@ module.exports.IpFormatError = IpFormatError
 module.exports.IndexWriter = IndexWriter
 module.exports.Index = Index
 module.exports.Facet = Facet
+module.exports.Explanation = Explanation

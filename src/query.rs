@@ -1,6 +1,6 @@
 use crate::{
     get_field, make_term, make_term_for_type, schema::FieldType, to_napi_error,
-    searcher::DocAddress, Schema,
+    searcher::DocAddress, Schema, explanation::Explanation,
 };
 use core::ops::Bound as OpsBound;
 use napi::{
@@ -406,5 +406,25 @@ impl Query {
         Ok(Query {
             inner: Box::new(inner),
         })
+    }
+
+    /// Explain how this query matches a given document.
+    /// 
+    /// This method provides detailed information about how the document matched the query
+    /// and how the score was calculated.
+    ///
+    /// # Arguments
+    /// * `searcher` - The searcher used to perform the search
+    /// * `doc_address` - The address of the document to explain
+    ///
+    /// # Returns
+    /// * `Explanation` - An object containing detailed scoring information
+    #[napi]
+    pub fn explain(&self, searcher: &crate::searcher::Searcher, doc_address: DocAddress) -> Result<Explanation> {
+        let tantivy_doc_address = tv::DocAddress::from(&doc_address);
+        let explanation = self.inner
+            .explain(&searcher.inner, tantivy_doc_address)
+            .map_err(to_napi_error)?;
+        Ok(Explanation::new(explanation))
     }
 }

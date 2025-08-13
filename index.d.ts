@@ -386,6 +386,20 @@ export declare class Query {
   /** Construct a Tantivy's ConstScoreQuery */
   static constScoreQuery(query: Query, score: number): Query
   static rangeQuery(schema: Schema, fieldName: string, fieldType: FieldType, lowerBound: unknown, upperBound: unknown, includeLower?: boolean | undefined | null, includeUpper?: boolean | undefined | null): Query
+  /**
+   * Explain how this query matches a given document.
+   *
+   * This method provides detailed information about how the document matched the query
+   * and how the score was calculated.
+   *
+   * # Arguments
+   * * `searcher` - The searcher used to perform the search
+   * * `doc_address` - The address of the document to explain
+   *
+   * # Returns
+   * * `Explanation` - An object containing detailed scoring information
+   */
+  explain(searcher: Searcher, docAddress: DocAddress): Explanation
 }
 /**
  * Tantivy's Searcher class
@@ -959,4 +973,20 @@ export declare class Facet {
    * @returns The facet path as a string
    */
   toString(): string
+}
+/**
+ * Represents an explanation of how a document matched a query.
+ * This provides detailed scoring information and query analysis.
+ */
+export declare class Explanation {
+  /**
+   * Returns a JSON representation of the explanation.
+   * This contains detailed information about how the document matched the query
+   * and how the score was calculated.
+   */
+  toJson(): string
+  /** Returns a string representation of the explanation. */
+  toString(): string
+  /** Gets the score value from the explanation. */
+  value(): number
 }
