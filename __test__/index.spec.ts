@@ -561,10 +561,6 @@ describe('TestClass', () => {
     }).toThrow(/Field "order" is not configured as fast field/)
   })
 
-  it.skip('test_query_explain', () => {
-    // This functionality is not available in the node binding yet.
-  })
-
   it('test_order_by_search_date', () => {
     const schema = new SchemaBuilder()
       .addDateField('order', { fast: true })
