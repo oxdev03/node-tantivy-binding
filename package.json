@@ -4,7 +4,7 @@
   "description": "Template project for writing node package with napi-rs",
   "main": "index.js",
   "types": "index.d.ts",
-  "repository": "git@github.com:napi-rs/package-template.git",
+  "repository": "https://github.com/oxdev03/node-tantivy-binding",
   "license": "MIT",
   "keywords": [
     "napi-rs",
