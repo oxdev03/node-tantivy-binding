@@ -108,10 +108,82 @@ npm test
 This is a **first draft** port of tantivy-py to Node.js. While the core functionality works, please be aware:
 
 - ⚠️ **Potential bugs**: Some edge cases may not be handled correctly
-  - Due to different type casting
-  - Missing error mapping
-  - Usage of napi-rs v2 instead of v3
 - 🔄 **API changes**: The API may evolve in future versions
+
+### Known Implementation Differences & TODOs
+
+The Node.js implementation currently differs from the Python version in several ways. These are documented TODOs for future improvement:
+
+#### 🔴 Critical Validation Issues
+
+##### Numeric Field Validation (Too Lenient)
+
+**Current behavior**: Node.js version accepts invalid values that Python rejects
+**TODO**: Implement strict validation to match Python behavior
+
+```javascript
+// ❌ These currently PASS in Node.js but should FAIL:
+Document.fromDict({ unsigned: -50 }, schema) // Should reject negative for unsigned
+Document.fromDict({ signed: 50.4 }, schema) // Should reject float for integer
+Document.fromDict({ unsigned: [1000, -50] }, schema) // Should reject arrays for single fields
+```
+
+##### Bytes Field Validation (Too Restrictive)
+
+**Current behavior**: Only accepts Buffer objects
+**TODO**: Support byte arrays like Python version
+
+```javascript
+// ❌ These currently FAIL in Node.js but should PASS:
+Document.fromDict({ bytes: [1, 2, 3] }, schema) // Should accept byte arrays
+Document.fromDict(
+  {
+    bytes: [
+      [1, 2, 3],
+      [4, 5, 6],
+    ],
+  },
+  schema,
+) // Should accept nested arrays
+```
+
+##### JSON Field Validation (Too Lenient)
+
+**Current behavior**: Accepts primitive types for JSON fields  
+**TODO**: Restrict to objects/arrays only
+
+```javascript
+// ❌ These currently PASS in Node.js but should FAIL:
+Document.fromDict({ json: 123 }, schema) // Should reject numbers
+Document.fromDict({ json: 'hello' }, schema) // Should reject strings
+```
+
+#### 🟠 Error Handling Differences
+
+##### Fast Field Configuration
+
+**Current**: Throws exception when field not configured as fast
+**Python**: Returns empty results
+**TODO**: Decide on consistent error handling approach
+
+##### Query Parser Errors
+
+**Current**: Different error message formats
+**TODO**: Align error messages with Python version
+
+#### 🔵 Type System Differences
+
+##### Date Handling
+
+**Current**: Uses getTime() timestamps
+**Python**: Uses datetime objects
+**TODO**: Consider more intuitive date API
+
+##### IP Address Format
+
+**Current**: Returns IPv6-mapped format for IPv4
+**Python**: Preserves original format
+**TODO**: Consider format consistency
 
 ## Architecture
 
