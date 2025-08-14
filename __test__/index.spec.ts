@@ -571,17 +571,17 @@ describe('TestClass', () => {
     const writer = index.writer()
 
     let doc = new Document()
-    doc.addDate('order', new Date('2020-01-01').toISOString())
+    doc.addDate('order', new Date('2020-01-01').getTime())
     doc.addText('title', 'Test title')
     writer.addDocument(doc)
 
     doc = new Document()
-    doc.addDate('order', new Date('2022-01-01').toISOString())
+    doc.addDate('order', new Date('2022-01-01').getTime())
     doc.addText('title', 'Final test title')
     writer.addDocument(doc)
 
     doc = new Document()
-    doc.addDate('order', new Date('2021-01-01').toISOString())
+    doc.addDate('order', new Date('2021-01-01').getTime())
     doc.addText('title', 'Another test title')
     writer.addDocument(doc)
 
@@ -959,7 +959,7 @@ describe('TestDocument', () => {
   it('test_document_with_date', () => {
     const doc = new Document()
     const testDate = new Date('2021-01-01T00:00:00.000Z')
-    doc.addDate('date', testDate.toISOString())
+    doc.addDate('date', testDate.getTime())
 
     const dict = doc.toDict() as TestDoc
     // Note: Node.js version stores dates with nanosecond precision
@@ -1005,7 +1005,7 @@ describe('TestDocument', () => {
 
     const doc = new Document()
     doc.addText('title', 'Test with facet')
-    doc.addFacet('category', '/test/category')
+    doc.addFacet('category', Facet.fromString('/category/test'))
 
     // Test basic document functionality with facets
     const dict = doc.toDict() as any
@@ -1645,7 +1645,7 @@ describe('TestFacet', () => {
 
     const doc = new Document()
     doc.addText('title', 'Test Product')
-    doc.addFacet('category', facet.toPathStr()) // Use our facet
+    doc.addFacet('category', facet) // Use our facet
     writer.addDocument(doc)
     writer.commit()
     index.reload()

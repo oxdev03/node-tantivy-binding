@@ -1,5 +1,5 @@
 {
-  "name": "node-tantivy-binding",
+  "name": "@oxdev03-org/node-tantivy",
   "version": "1.0.0",
   "description": "Template project for writing node package with napi-rs",
   "main": "index.js",
@@ -19,7 +19,7 @@
     "index.js"
   ],
   "napi": {
-    "binaryName": "node-tantivy-binding",
+    "binaryName": "node-tantivy",
     "targets": [
       "aarch64-apple-darwin",
       "aarch64-pc-windows-msvc",

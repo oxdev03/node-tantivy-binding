@@ -1359,6 +1359,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxdev03-org/node-tantivy@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@oxdev03-org/node-tantivy@workspace:."
+  dependencies:
+    "@emnapi/core": "npm:^1.4.5"
+    "@emnapi/runtime": "npm:^1.4.5"
+    "@napi-rs/cli": "npm:^3.1.4"
+    "@oxc-node/core": "npm:^0.0.32"
+    "@taplo/cli": "npm:^0.7.0"
+    "@tybys/wasm-util": "npm:^0.10.0"
+    "@types/node": "npm:^22.10.5"
+    chalk: "npm:^5.4.1"
+    husky: "npm:^9.1.7"
+    lint-staged: "npm:^16.1.2"
+    npm-run-all2: "npm:^8.0.4"
+    oxlint: "npm:^1.8.0"
+    prettier: "npm:^3.6.2"
+    tinybench: "npm:^4.0.1"
+    typescript: "npm:^5.8.3"
+    vitest: "npm:^2.1.8"
+  languageName: unknown
+  linkType: soft
+
 "@oxlint-tsgolint/darwin-arm64@npm:0.0.1":
   version: 0.0.1
   resolution: "@oxlint-tsgolint/darwin-arm64@npm:0.0.1"
@@ -2711,29 +2734,6 @@ __metadata:
   checksum: 10c0/5f4ad5a729386f7b50096efd4934b06c071dbfbc7d7d541a66d6959a7dccd62f53ff3dc95fffb60bf99d8da1270e23769f82246fcaa6c5645a70c967ae9a3398
   languageName: node
   linkType: hard
-
-"node-tantivy-binding@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "node-tantivy-binding@workspace:."
-  dependencies:
-    "@emnapi/core": "npm:^1.4.5"
-    "@emnapi/runtime": "npm:^1.4.5"
-    "@napi-rs/cli": "npm:^3.1.4"
-    "@oxc-node/core": "npm:^0.0.32"
-    "@taplo/cli": "npm:^0.7.0"
-    "@tybys/wasm-util": "npm:^0.10.0"
-    "@types/node": "npm:^22.10.5"
-    chalk: "npm:^5.4.1"
-    husky: "npm:^9.1.7"
-    lint-staged: "npm:^16.1.2"
-    npm-run-all2: "npm:^8.0.4"
-    oxlint: "npm:^1.8.0"
-    prettier: "npm:^3.6.2"
-    tinybench: "npm:^4.0.1"
-    typescript: "npm:^5.8.3"
-    vitest: "npm:^2.1.8"
-  languageName: unknown
-  linkType: soft
 
 "nopt@npm:^8.0.0":
   version: 8.1.0

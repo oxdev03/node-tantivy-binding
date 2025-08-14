@@ -125,7 +125,7 @@ export const createIndexWithDateField = (dir?: string) => {
   const doc1 = new Document()
   doc1.addInteger('id', 1)
   doc1.addFloat('rating', 3.5)
-  doc1.addDate('date', new Date('2021-01-01').toISOString())
+  doc1.addDate('date', new Date('2021-01-01').getTime())
   writer.addDocument(doc1)
 
   const doc2 = Document.fromDict(

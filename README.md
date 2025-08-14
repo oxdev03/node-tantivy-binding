@@ -1,4 +1,4 @@
-# node-tantivy-binding
+# node-tantivy
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -13,7 +13,7 @@ This project is a Node.js port of [tantivy-py](https://github.com/quickwit-inc/t
 The bindings can be installed using npm:
 
 ```bash
-npm install node-tantivy-binding
+npm install @oxdev03-org/node-tantivy
 ```
 
 If no binary is present for your operating system, the bindings will be built from source, which requires Rust to be installed.
@@ -21,7 +21,7 @@ If no binary is present for your operating system, the bindings will be built fr
 # Quick Start
 
 ```javascript
-import { SchemaBuilder, FieldType, Index, Document } from 'node-tantivy-binding'
+import { SchemaBuilder, FieldType, Index, Document } from '@oxdev03-org/node-tantivy'
 
 // Create a schema
 const schema = new SchemaBuilder()

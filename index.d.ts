@@ -17,101 +17,124 @@ export declare class DateFormatError {
  * (field_name, value). In this list, one field may appear more than once.
  *
  * Example:
- * ```javascript
- * const doc = new Document();
- * doc.addText("title", "The Old Man and the Sea");
- * doc.addText("body", "He was an old man who fished alone in a skiff...");
- * ```
+ *     const doc = new Document();
+ *     doc.addText("title", "The Old Man and the Sea");
+ *     doc.addText("body", "He was an old man who fished alone in a " +
+ *                         "skiff in the Gulf Stream and he had gone " +
+ *                         "eighty-four days now without taking a fish.");
+ *     console.log(doc.toString());
+ *
+ * For simplicity, it is also possible to build a `Document` by passing the field
+ * values directly as constructor arguments.
+ *
+ * Example:
+ *     const doc = Document.fromObject({
+ *         title: "The Old Man and the Sea",
+ *         body: "..."
+ *     });
+ *
+ * For numeric fields, the `Document` constructor does not have any
+ * information about the type and will try to guess the type.
+ * Therefore, it is recommended to use the `Document.fromObject()`,
+ * or `Document.add*()` functions to provide
+ * explicit type information.
  */
 export declare class Document {
   /** Creates a new document. */
   constructor()
+  /** Extend the document with field values from a JavaScript object. */
+  extend(jsObj: object, schema?: Schema | undefined | null): void
+  /** Create a document from a JavaScript object. */
+  static fromDict(jsObj: object, schema?: Schema | undefined | null): Document
   /**
-   * Extend the document with values from a dictionary.
+   * Returns a JavaScript object with the different field values.
    *
-   * @param dict - Object containing field names and values to add
-   * @param schema - Optional schema for type validation
-   */
-  extend(dict: object, schema?: Schema | undefined | null): void
-  /**
-   * Create a document from a dictionary with optional schema.
+   * In tantivy, `Document` can hold multiple values for a single field.
    *
-   * @param dict - Object containing field names and values
-   * @param schema - Optional schema for type validation
-   */
-  static fromDict(dict: object, schema?: Schema | undefined | null): Document
-  /**
-   * Returns a dictionary with the different
-   * field values.
+   * For this reason, the object will associate a list of values for every field.
    */
   toDict(): object
   /**
    * Add a text value to the document.
    *
-   * @param field_name - The field name for which we are adding the text.
-   * @param text - The text that will be added to the document.
+   * Args:
+   *     field_name: The field name for which we are adding the text.
+   *     text: The text that will be added to the document.
    */
   addText(fieldName: string, text: string): void
   /**
    * Add an unsigned integer value to the document.
    *
-   * @param field_name - The field name for which we are adding the unsigned integer.
-   * @param value - The integer that will be added to the document.
+   * Args:
+   *     field_name: The field name for which we are adding the unsigned integer.
+   *     value: The integer that will be added to the document.
    */
   addUnsigned(fieldName: string, value: number): void
   /**
    * Add a signed integer value to the document.
    *
-   * @param field_name - The field name for which we are adding the integer.
-   * @param value - The integer that will be added to the document.
+   * Args:
+   *     field_name: The field name for which we are adding the integer.
+   *     value: The integer that will be added to the document.
    */
   addInteger(fieldName: string, value: number): void
   /**
    * Add a float value to the document.
    *
-   * @param field_name - The field name for which we are adding the value.
-   * @param value - The float that will be added to the document.
+   * Args:
+   *     field_name: The field name for which we are adding the value.
+   *     value: The float that will be added to the document.
    */
   addFloat(fieldName: string, value: number): void
   /**
    * Add a boolean value to the document.
    *
-   * @param field_name - The field name for which we are adding the value.
-   * @param value - The boolean that will be added to the document.
+   * Args:
+   *     field_name: The field name for which we are adding the value.
+   *     value: The boolean that will be added to the document.
    */
   addBoolean(fieldName: string, value: boolean): void
   /**
    * Add a date value to the document.
    *
-   * @param field_name - The field name for which we are adding the date.
-   * @param value - The date as a string in RFC 3339 format or a Unix timestamp (in seconds).
+   * Args:
+   *     field_name: The field name for which we are adding the date.
+   *     value: The date timestamp in seconds that will be added to the document.
    */
-  addDate(fieldName: string, value: string): void
+  addDate(fieldName: string, timestampSecs: number): void
   /**
    * Add a facet value to the document.
-   * @param field_name - The field name for which we are adding the facet.
-   * @param value - The Facet that will be added to the document.
+   * Args:
+   *     field_name: The field name for which we are adding the facet.
+   *     value: The Facet that will be added to the document.
    */
-  addFacet(fieldName: string, facetPath: string): void
+  addFacet(fieldName: string, facet: Facet): void
   /**
    * Add a bytes value to the document.
    *
-   * @param field_name - The field for which we are adding the bytes.
-   * @param value - The bytes that will be added to the document.
+   * Args:
+   *     field_name: The field for which we are adding the bytes.
+   *     value: The bytes that will be added to the document.
    */
-  addBytes(fieldName: string, bytes: Buffer): void
+  addBytes(fieldName: string, bytes: Array<number>): void
   /**
    * Add a JSON value to the document.
    *
-   * @param field_name - The field for which we are adding the JSON.
-   * @param value - The JSON object as a string or object.
+   * Args:
+   *     field_name: The field for which we are adding the JSON.
+   *     value: The JSON object that will be added to the document.
+   *
+   * Raises an error if the JSON is invalid.
    */
   addJson(fieldName: string, value: object): void
   /**
    * Add an IP address value to the document.
    *
-   * @param field_name - The field for which we are adding the IP address.
-   * @param value - The IP address object that will be added to the document.
+   * Args:
+   *     field_name: The field for which we are adding the IP address.
+   *     value: The IP address string that will be added to the document.
+   *
+   * Raises an error if the IP address is invalid.
    */
   addIpAddr(fieldName: string, value: string): void
   /** Returns the number of added fields that have been added to the document */
@@ -121,17 +144,25 @@ export declare class Document {
   /**
    * Get the first value associated with the given field.
    *
-   * @param field_name - The field for which we would like to get the value.
-   * @returns The value if one is found, otherwise null.
+   * Args:
+   *     field_name: The field for which we would like to get the value.
+   *
+   * Returns the value if one is found, otherwise undefined.
+   * The type of the value depends on the field.
    */
   getFirst(fieldName: string): unknown
   /**
-   * Get the all values associated with the given field.
+   * Get all values associated with the given field.
    *
-   * @param field_name - The field for which we would like to get the values.
-   * @returns A list of values.
+   * Args:
+   *     field_name: The field for which we would like to get the values.
+   *
+   * Returns an array of values.
+   * The type of the value depends on the field.
    */
   getAll(fieldName: string): unknown
+  /** Convert the document to a string representation */
+  toString(): string
 }
 
 /** The query contains a term for a bytes field, but the value is not valid base64. */

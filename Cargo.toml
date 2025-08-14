@@ -2,7 +2,7 @@
 description = "Node.js bindings for Tantivy search engine"
 edition     = "2021"
 license     = "MIT"
-name        = "node-tantivy"
+name        = "node_tantivy"
 version     = "0.1.0"
 
 [lib]
