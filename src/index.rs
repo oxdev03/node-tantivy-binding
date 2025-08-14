@@ -1,5 +1,7 @@
 #![allow(clippy::new_ret_no_self)]
 
+use std::collections::HashMap;
+
 use napi::bindgen_prelude::*;
 use napi::{Error, Result, Status};
 use napi_derive::napi;
@@ -378,17 +380,72 @@ impl Index {
   ///
   ///     default_fields_names: A list of fields used to search if no
   ///         field is specified in the query.
+  ///
+  ///     field_boosts: A dictionary keyed on field names which provides default boosts
+  ///         for the query constructed by this method.
+  ///
+  ///     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+  ///         triples making queries constructed by this method fuzzy against the given fields
+  ///         and using the given parameters.
+  ///         `prefix` determines if terms which are prefixes of the given term match the query.
+  ///         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
+  ///         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
   #[napi]
   pub fn parse_query(
     &self,
     query: String,
     default_field_names: Option<Vec<String>>,
+    field_boosts: Option<HashMap<String, f64>>,
+    fuzzy_fields: Option<HashMap<String, (bool, u8, bool)>>,
   ) -> Result<Query> {
-    let parser = self.prepare_query_parser(default_field_names)?;
+    let parser = self.prepare_query_parser(default_field_names, field_boosts, fuzzy_fields)?;
 
     let query = parser.parse_query(&query).map_err(to_napi_error)?;
 
     Ok(Query { inner: query })
+  }
+
+  /// Parse a query leniently.
+  ///
+  /// This variant parses invalid query on a best effort basis. If some part of the query can't
+  /// reasonably be executed (range query without field, searching on a non existing field,
+  /// searching without precising field when no default field is provided...), they may get turned
+  /// into a "match-nothing" subquery.
+  ///
+  /// Args:
+  ///     query: the query, following the tantivy query language.
+  ///
+  ///     default_fields_names: A list of fields used to search if no
+  ///         field is specified in the query.
+  ///
+  ///     field_boosts: A dictionary keyed on field names which provides default boosts
+  ///         for the query constructed by this method.
+  ///
+  ///     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+  ///         triples making queries constructed by this method fuzzy against the given fields
+  ///         and using the given parameters.
+  ///         `prefix` determines if terms which are prefixes of the given term match the query.
+  ///         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
+  ///         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
+  ///
+  /// Returns a tuple containing the parsed query and a list of error messages.
+  #[napi]
+  pub fn parse_query_lenient(
+    &self,
+    query: String,
+    default_field_names: Option<Vec<String>>,
+    field_boosts: Option<HashMap<String, f64>>,
+    fuzzy_fields: Option<HashMap<String, (bool, u8, bool)>>,
+  ) -> Result<(Query, Vec<String>)> {
+    let parser = self.prepare_query_parser(default_field_names, field_boosts, fuzzy_fields)?;
+
+    let (query, errors) = parser.parse_query_lenient(&query);
+    let error_messages: Vec<String> = errors
+      .into_iter()
+      .map(|err| format!("{:?}", err))
+      .collect();
+
+    Ok((Query { inner: query }, error_messages))
   }
 
   /// Register a custom text analyzer by name. (Confusingly,
@@ -409,6 +466,8 @@ impl Index {
   fn prepare_query_parser(
     &self,
     default_field_names: Option<Vec<String>>,
+    field_boosts: Option<HashMap<String, f64>>,
+    fuzzy_fields: Option<HashMap<String, (bool, u8, bool)>>,
   ) -> Result<tv::query::QueryParser> {
     let schema = self.index.schema();
 
@@ -442,7 +501,33 @@ impl Index {
         .collect()
     };
 
-    let parser = tv::query::QueryParser::for_index(&self.index, default_fields);
+    let mut parser = tv::query::QueryParser::for_index(&self.index, default_fields);
+
+    // Set field boosts if provided
+    if let Some(field_boosts) = field_boosts {
+      for (field_name, boost) in field_boosts {
+        let field = schema.get_field(&field_name).map_err(|_err| {
+          Error::new(
+            Status::InvalidArg,
+            format!("Field `{field_name}` is not defined in the schema."),
+          )
+        })?;
+        parser.set_field_boost(field, boost as tv::Score);
+      }
+    }
+
+    // Set fuzzy fields if provided
+    if let Some(fuzzy_fields) = fuzzy_fields {
+      for (field_name, (prefix, distance, transpose_cost_one)) in fuzzy_fields {
+        let field = schema.get_field(&field_name).map_err(|_err| {
+          Error::new(
+            Status::InvalidArg,
+            format!("Field `{field_name}` is not defined in the schema."),
+          )
+        })?;
+        parser.set_field_fuzzy(field, prefix, distance, transpose_cost_one);
+      }
+    }
 
     Ok(parser)
   }

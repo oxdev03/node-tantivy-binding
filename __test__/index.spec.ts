@@ -316,6 +316,38 @@ describe('TestClass', () => {
     )
   })
 
+  it('test_parse_query_field_boosts', () => {
+    const query = ramIndex.parseQuery('winter', undefined, { title: 2.3 })
+    expect(query.toString()).toBe(
+      'Query(BooleanQuery { subqueries: [(Should, Boost(query=TermQuery(Term(field=0, type=Str, "winter")), boost=2.3)), (Should, TermQuery(Term(field=1, type=Str, "winter")))], minimum_number_should_match: 1 })',
+    )
+  })
+
+  it('test_parse_query_fuzzy_fields', () => {
+    const query = ramIndex.parseQuery('winter', undefined, undefined, { title: [true, 1, false] })
+    expect(query.toString()).toBe(
+      'Query(BooleanQuery { subqueries: [(Should, FuzzyTermQuery { term: Term(field=0, type=Str, "winter"), distance: 1, transposition_cost_one: false, prefix: true }), (Should, TermQuery(Term(field=1, type=Str, "winter")))], minimum_number_should_match: 1 })',
+    )
+  })
+
+  it('test_query_lenient', () => {
+    // Test with valid query - should have no errors
+    let [query, errors] = ramIndexNumericFields.parseQueryLenient('rating:3.5')
+    expect(errors.length).toBe(0)
+    expect(query.toString()).toBe('Query(TermQuery(Term(field=1, type=F64, 3.5)))')
+
+    // Test with field that doesn't exist - should have 1 error
+    let [_, errors2] = ramIndexNumericFields.parseQueryLenient('bod:men')
+    expect(errors2.length).toBe(1)
+    expect(errors2[0]).toContain('bod')
+
+    // Test with multiple errors in complex query
+    let [query3, errors3] = ramIndexNumericFields.parseQueryLenient("body:'hello' AND id:<3.5 OR rating:'hi'")
+    expect(errors3.length).toBe(2)
+    // Check that query still parses partially
+    expect(query3.toString()).toContain('TermQuery(Term(field=3, type=Str, "hello"))')
+  })
+
   it('test_and_query_date_fields', () => {
     const searcher = ramIndexWithDateField.searcher()
 
@@ -384,44 +416,11 @@ describe('TestClass', () => {
     expect(result5.hits.length).toBe(0)
   })
 
-  it('test_parse_query_field_boosts', () => {
-    // The Node.js version doesn't support field boosts in parseQuery like Python
-    // So we'll manually construct the equivalent queries and test them individually
-    const titleQuery = Query.termQuery(ramIndex.schema, 'title', 'winter')
-    const boostedQuery = Query.boostQuery(titleQuery, 2.3)
-    const bodyQuery = Query.termQuery(ramIndex.schema, 'body', 'winter')
-
-    // Test that boost query works correctly
-    expect(boostedQuery.toString()).toBe('Query(Boost(query=TermQuery(Term(field=0, type=Str, "winter")), boost=2.3))')
-
-    // Test that term query works correctly
-    expect(bodyQuery.toString()).toBe('Query(TermQuery(Term(field=1, type=Str, "winter")))')
-  })
-
-  it('test_parse_query_fuzzy_fields', () => {
-    // The Node.js version doesn't support fuzzy fields in parseQuery like Python
-    // So we'll manually construct the equivalent queries and test them individually
-    const titleQuery = Query.fuzzyTermQuery(ramIndex.schema, 'title', 'winter', 1, false, true)
-    const bodyQuery = Query.termQuery(ramIndex.schema, 'body', 'winter')
-
-    // Test that fuzzy query works correctly
-    expect(titleQuery.toString()).toBe(
-      'Query(FuzzyTermQuery { term: Term(field=0, type=Str, "winter"), distance: 1, transposition_cost_one: false, prefix: true })',
-    )
-
-    // Test that term query works correctly
-    expect(bodyQuery.toString()).toBe('Query(TermQuery(Term(field=1, type=Str, "winter")))')
-  })
-
   it('test_query_errors', () => {
     // no "bod" field
     expect(() => {
       ramIndex.parseQuery('bod:men', ['title', 'body'])
     }).toThrow()
-  })
-
-  it.skip('test_query_lenient', () => {
-    // This functionality is not available in the node binding yet.
   })
 
   it('test_query_explain', () => {

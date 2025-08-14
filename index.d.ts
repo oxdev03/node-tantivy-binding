@@ -432,8 +432,55 @@ export declare class Index {
    *
    *     default_fields_names: A list of fields used to search if no
    *         field is specified in the query.
+   *
+   *     field_boosts: A dictionary keyed on field names which provides default boosts
+   *         for the query constructed by this method.
+   *
+   *     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+   *         triples making queries constructed by this method fuzzy against the given fields
+   *         and using the given parameters.
+   *         `prefix` determines if terms which are prefixes of the given term match the query.
+   *         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
+   *         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
    */
-  parseQuery(query: string, defaultFieldNames?: Array<string> | undefined | null): Query
+  parseQuery(
+    query: string,
+    defaultFieldNames?: Array<string> | undefined | null,
+    fieldBoosts?: Record<string, number> | undefined | null,
+    fuzzyFields?: Record<string, [boolean, number, boolean]> | undefined | null,
+  ): Query
+  /**
+   * Parse a query leniently.
+   *
+   * This variant parses invalid query on a best effort basis. If some part of the query can't
+   * reasonably be executed (range query without field, searching on a non existing field,
+   * searching without precising field when no default field is provided...), they may get turned
+   * into a "match-nothing" subquery.
+   *
+   * Args:
+   *     query: the query, following the tantivy query language.
+   *
+   *     default_fields_names: A list of fields used to search if no
+   *         field is specified in the query.
+   *
+   *     field_boosts: A dictionary keyed on field names which provides default boosts
+   *         for the query constructed by this method.
+   *
+   *     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+   *         triples making queries constructed by this method fuzzy against the given fields
+   *         and using the given parameters.
+   *         `prefix` determines if terms which are prefixes of the given term match the query.
+   *         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
+   *         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
+   *
+   * Returns a tuple containing the parsed query and a list of error messages.
+   */
+  parseQueryLenient(
+    query: string,
+    defaultFieldNames?: Array<string> | undefined | null,
+    fieldBoosts?: Record<string, number> | undefined | null,
+    fuzzyFields?: Record<string, [boolean, number, boolean]> | undefined | null,
+  ): [Query, Array<string>]
   /**
    * Register a custom text analyzer by name. (Confusingly,
    * this is one of the places where Tantivy uses 'tokenizer' to refer to a
