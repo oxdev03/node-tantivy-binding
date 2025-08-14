@@ -157,9 +157,8 @@ impl IndexWriter {
   /// `delete_documents_by_query` method instead, which will delete documents
   /// matching the given query using the same query parser as used in search queries.
   ///
-  /// Args:
-  ///     field_name: The field name for which we want to filter deleted docs.
-  ///     field_value: JavaScript value with the value we want to filter.
+  /// @param fieldName - The field name for which we want to filter deleted docs.
+  /// @param fieldValue - JavaScript value with the value we want to filter.
   ///
   /// If the field_name is not on the schema raises error.
   /// If the field_value is not supported raises error.
@@ -175,8 +174,7 @@ impl IndexWriter {
 
   /// Delete all documents matching a given query.
   ///
-  /// Args:
-  ///    query: The query to filter the deleted documents.
+  /// @param query - The query to filter the deleted documents.
   ///
   /// If the query is not valid raises error.
   /// If the query is not supported raises error.
@@ -204,11 +202,10 @@ impl IndexWriter {
 
 /// Create a new index object.
 ///
-/// Args:
-///     schema: The schema of the index.
-///     path: The path where the index should be stored. If
+/// @param schema - The schema of the index.
+/// @param path - The path where the index should be stored. If
 ///         no path is provided, the index will be stored in memory.
-///     reuse: Should we open an existing index if one exists
+/// @param reuse - Should we open an existing index if one exists
 ///         or always create a new one.
 ///
 /// If an index already exists it will be opened and reused. Raises error
@@ -262,15 +259,14 @@ impl Index {
   /// The writer will be multithreaded and the provided heap size will be
   /// split between the given number of threads.
   ///
-  /// Args:
-  ///     overall_heap_size: The total target heap memory usage of
+  /// @param heapSize - The total target heap memory usage of
   ///         the writer. Tantivy requires that this can't be less
   ///         than 3000000 *per thread*. Lower values will result in more
   ///         frequent internal commits when adding documents (slowing down
   ///         write progress), and larger values will results in fewer
   ///         commits but greater memory usage. The best value will depend
   ///         on your specific use case.
-  ///     num_threads: The number of threads that the writer
+  /// @param numThreads - The number of threads that the writer
   ///         should use. If this value is 0, tantivy will choose
   ///         automatically the number of threads.
   ///
@@ -293,10 +289,9 @@ impl Index {
 
   /// Configure the index reader.
   ///
-  /// Args:
-  ///     reload_policy: The reload policy that the
+  /// @param reloadPolicy - The reload policy that the
   ///         IndexReader should use. Can be `Manual` or `OnCommit`.
-  ///     num_warmers: The number of searchers that the
+  /// @param numWarmers - The number of searchers that the
   ///         reader should create.
   #[napi]
   pub fn config_reader(
@@ -344,8 +339,7 @@ impl Index {
   }
 
   /// Check if the given path contains an existing index.
-  /// Args:
-  ///     path: The path where tantivy will search for an index.
+  /// @param path - The path where tantivy will search for an index.
   ///
   /// Returns True if an index exists at the given path, False otherwise.
   ///
@@ -375,16 +369,15 @@ impl Index {
 
   /// Parse a query
   ///
-  /// Args:
-  ///     query: the query, following the tantivy query language.
+  /// @param query - the query, following the tantivy query language.
   ///
-  ///     default_fields_names: A list of fields used to search if no
+  /// @param defaultFieldNames - A list of fields used to search if no
   ///         field is specified in the query.
   ///
-  ///     field_boosts: A dictionary keyed on field names which provides default boosts
+  /// @param fieldBoosts - A dictionary keyed on field names which provides default boosts
   ///         for the query constructed by this method.
   ///
-  ///     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+  /// @param fuzzyFields - A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
   ///         triples making queries constructed by this method fuzzy against the given fields
   ///         and using the given parameters.
   ///         `prefix` determines if terms which are prefixes of the given term match the query.
@@ -412,16 +405,15 @@ impl Index {
   /// searching without precising field when no default field is provided...), they may get turned
   /// into a "match-nothing" subquery.
   ///
-  /// Args:
-  ///     query: the query, following the tantivy query language.
+  /// @param query - the query, following the tantivy query language.
   ///
-  ///     default_fields_names: A list of fields used to search if no
+  /// @param defaultFieldNames - A list of fields used to search if no
   ///         field is specified in the query.
   ///
-  ///     field_boosts: A dictionary keyed on field names which provides default boosts
+  /// @param fieldBoosts - A dictionary keyed on field names which provides default boosts
   ///         for the query constructed by this method.
   ///
-  ///     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+  /// @param fuzzyFields - A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
   ///         triples making queries constructed by this method fuzzy against the given fields
   ///         and using the given parameters.
   ///         `prefix` determines if terms which are prefixes of the given term match the query.

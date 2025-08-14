@@ -79,24 +79,23 @@ pub struct SearchHit {
 impl Searcher {
   /// Search the index with the given query and collect results.
   ///
-  /// Args:
-  ///     query (Query): The query that will be used for the search.
-  ///     limit (int, optional): The maximum number of search results to
+  /// @param query - The query that will be used for the search.
+  /// @param limit - The maximum number of search results to
   ///         return. Defaults to 10.
-  ///     count (bool, optional): Should the number of documents that match
+  /// @param count - Should the number of documents that match
   ///         the query be returned as well. Defaults to true.
-  ///     order_by_field (Field, optional): A schema field that the results
+  /// @param orderByField - A schema field that the results
   ///         should be ordered by. The field must be declared as a fast field
   ///         when building the schema. Note, this only works for unsigned
   ///         fields.
-  ///     offset (Field, optional): The offset from which the results have
+  /// @param offset - The offset from which the results have
   ///         to be returned.
-  ///     order (Order, optional): The order in which the results
+  /// @param order - The order in which the results
   ///         should be sorted. If not specified, defaults to descending.
   ///
-  /// Returns `SearchResult` object.
+  /// @returns SearchResult object.
   ///
-  /// Raises a ValueError if there was an error with the search.
+  /// @throws ValueError if there was an error with the search.
   #[napi]
   #[allow(clippy::too_many_arguments)]
   pub fn search(
@@ -232,11 +231,10 @@ impl Searcher {
 
   /// Fetches a document from Tantivy's store given a DocAddress.
   ///
-  /// Args:
-  ///     doc_address (DocAddress): The DocAddress that is associated with
+  /// @param docAddress - The DocAddress that is associated with
   ///         the document that we wish to fetch.
   ///
-  /// Returns the Document, raises ValueError if the document can't be found.
+  /// @returns The Document, raises ValueError if the document can't be found.
   #[napi]
   pub fn doc(&self, doc_address: DocAddress) -> Result<Document> {
     let doc: TantivyDocument = self

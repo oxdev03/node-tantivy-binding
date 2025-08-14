@@ -89,10 +89,9 @@ impl TokenizerStatic {
 
   /// NgramTokenizer
   ///
-  /// Args:
-  /// - min_gram (number): Minimum character length of each ngram.
-  /// - max_gram (number): Maximum character length of each ngram.
-  /// - prefix_only (boolean, optional): If true, ngrams must count from the start of the word.
+  /// @param minGram - Minimum character length of each ngram.
+  /// @param maxGram - Maximum character length of each ngram.
+  /// @param prefixOnly - If true, ngrams must count from the start of the word.
   #[napi]
   pub fn ngram(
     min_gram: Option<u32>,
@@ -173,8 +172,7 @@ impl FilterStatic {
 
   /// RemoveLongFilter
   ///
-  /// Args:
-  /// - length_limit (number): max character length of token.
+  /// @param lengthLimit - max character length of token.
   #[napi]
   pub fn remove_long(length_limit: u32) -> Filter {
     Filter {
@@ -192,8 +190,7 @@ impl FilterStatic {
 
   /// StopWordFilter (builtin stop word list)
   ///
-  /// Args:
-  /// - language (string): Stop words list language.
+  /// @param language - Stop words list language.
   ///   Valid values: {
   ///     "arabic", "danish", "dutch", "english", "finnish", "french", "german", "greek",
   ///     "hungarian", "italian", "norwegian", "portuguese", "romanian", "russian",
@@ -211,8 +208,7 @@ impl FilterStatic {
   /// This variant of Filter.stopword() lets you provide
   /// your own custom list of stopwords.
   ///
-  /// Args:
-  /// - stopwords (Array<string>): a list of words to be removed.
+  /// @param stopwords - a list of words to be removed.
   #[napi]
   pub fn custom_stopword(stopwords: Vec<String>) -> Filter {
     Filter {
@@ -224,8 +220,7 @@ impl FilterStatic {
   ///
   /// https://docs.rs/tantivy/latest/tantivy/tokenizer/struct.SplitCompoundWords.html
   ///
-  /// Args:
-  /// - constituent_words (Array<string>): words that make up compound word (must be in order).
+  /// @param constituentWords - words that make up compound word (must be in order).
   ///
   /// Example:
   ///
@@ -283,10 +278,8 @@ pub struct TextAnalyzer {
 #[napi]
 impl TextAnalyzer {
   /// Tokenize a string
-  /// Args:
-  /// - text (string): text to tokenize.
-  /// Returns:
-  /// - Array<string>: a list of tokens/words.
+  /// @param text - text to tokenize.
+  /// @returns - a list of tokens/words.
   #[napi]
   pub fn analyze(&mut self, text: String) -> Vec<String> {
     let mut token_stream = self.analyzer.token_stream(&text);
@@ -351,10 +344,8 @@ impl TextAnalyzerBuilder {
 
   /// Add filter to the builder.
   ///
-  /// Args:
-  /// - filter (Filter): a Filter object.
-  /// Returns:
-  /// - TextAnalyzerBuilder: A new instance of the builder
+  /// @param filter - a Filter object.
+  /// @returns - A new instance of the builder
   ///
   /// Note: The builder is _not_ mutated in-place.
   #[napi]
@@ -391,8 +382,7 @@ impl TextAnalyzerBuilder {
 
   /// Build final TextAnalyzer object.
   ///
-  /// Returns:
-  /// - TextAnalyzer with tokenizer and filters baked in.
+  /// @returns - TextAnalyzer with tokenizer and filters baked in.
   ///
   /// Tip: TextAnalyzer's `analyze(text) -> tokens` method lets you
   /// easily check if your analyzer is working as expected.

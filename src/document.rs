@@ -781,9 +781,8 @@ impl Document {
 
     /// Add a text value to the document.
     ///
-    /// Args:
-    ///     field_name: The field name for which we are adding the text.
-    ///     text: The text that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the text.
+    /// @param text - The text that will be added to the document.
     #[napi]
     pub fn add_text(&mut self, field_name: String, text: String) {
         self.add_value(field_name, text);
@@ -791,9 +790,8 @@ impl Document {
 
     /// Add an unsigned integer value to the document.
     ///
-    /// Args:
-    ///     field_name: The field name for which we are adding the unsigned integer.
-    ///     value: The integer that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the unsigned integer.
+    /// @param value - The integer that will be added to the document.
     #[napi]
     pub fn add_unsigned(&mut self, field_name: String, value: u32) {
         self.add_value(field_name, value as u64);
@@ -801,9 +799,8 @@ impl Document {
 
     /// Add a signed integer value to the document.
     ///
-    /// Args:
-    ///     field_name: The field name for which we are adding the integer.
-    ///     value: The integer that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the integer.
+    /// @param value - The integer that will be added to the document.
     #[napi]
     pub fn add_integer(&mut self, field_name: String, value: i64) {
         self.add_value(field_name, value);
@@ -811,9 +808,8 @@ impl Document {
 
     /// Add a float value to the document.
     ///
-    /// Args:
-    ///     field_name: The field name for which we are adding the value.
-    ///     value: The float that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the value.
+    /// @param value - The float that will be added to the document.
     #[napi]
     pub fn add_float(&mut self, field_name: String, value: f64) {
         self.add_value(field_name, value);
@@ -821,9 +817,8 @@ impl Document {
 
     /// Add a boolean value to the document.
     ///
-    /// Args:
-    ///     field_name: The field name for which we are adding the value.
-    ///     value: The boolean that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the value.
+    /// @param value - The boolean that will be added to the document.
     #[napi]
     pub fn add_boolean(&mut self, field_name: String, value: bool) {
         self.add_value(field_name, value);
@@ -831,9 +826,8 @@ impl Document {
 
     /// Add a date value to the document.
     ///
-    /// Args:
-    ///     field_name: The field name for which we are adding the date.
-    ///     value: The date timestamp in milliseconds (JavaScript time) that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the date.
+    /// @param timestampMillis - The date timestamp in milliseconds (JavaScript time) that will be added to the document.
     #[napi]
     pub fn add_date(&mut self, field_name: String, timestamp_millis: i64) {
         self.add_value(
@@ -843,9 +837,8 @@ impl Document {
     }
 
     /// Add a facet value to the document.
-    /// Args:
-    ///     field_name: The field name for which we are adding the facet.
-    ///     value: The Facet that will be added to the document.
+    /// @param fieldName - The field name for which we are adding the facet.
+    /// @param facet - The Facet that will be added to the document.
     #[napi]
     pub fn add_facet(&mut self, field_name: String, facet: &Facet) {
         self.add_value(field_name, facet.inner.clone());
@@ -853,9 +846,8 @@ impl Document {
 
     /// Add a bytes value to the document.
     ///
-    /// Args:
-    ///     field_name: The field for which we are adding the bytes.
-    ///     value: The bytes (as Buffer or Uint8Array) that will be added to the document.
+    /// @param fieldName - The field for which we are adding the bytes.
+    /// @param bytes - The bytes (as Buffer or Uint8Array) that will be added to the document.
     #[napi]
     pub fn add_bytes(&mut self, field_name: String, bytes: &[u8]) {
         self.add_value(field_name, bytes.to_vec());
@@ -863,11 +855,10 @@ impl Document {
 
     /// Add a JSON value to the document.
     ///
-    /// Args:
-    ///     field_name: The field for which we are adding the JSON.
-    ///     value: The JSON object that will be added to the document.
+    /// @param fieldName - The field for which we are adding the JSON.
+    /// @param value - The JSON object that will be added to the document.
     ///
-    /// Raises an error if the JSON is invalid.
+    /// @throws Raises an error if the JSON is invalid.
     #[napi]
     pub fn add_json(&mut self, field_name: String, value: Object) -> Result<()> {
         let json_value = js_object_to_json_value(value)?;
@@ -879,11 +870,10 @@ impl Document {
 
     /// Add an IP address value to the document.
     ///
-    /// Args:
-    ///     field_name: The field for which we are adding the IP address.
-    ///     value: The IP address string that will be added to the document.
+    /// @param fieldName - The field for which we are adding the IP address.
+    /// @param value - The IP address string that will be added to the document.
     ///
-    /// Raises an error if the IP address is invalid.
+    /// @throws Raises an error if the IP address is invalid.
     #[napi]
     pub fn add_ip_addr(&mut self, field_name: String, value: String) -> Result<()> {
         let ip_addr = IpAddr::from_str(&value)
@@ -911,10 +901,9 @@ impl Document {
 
     /// Get the first value associated with the given field.
     ///
-    /// Args:
-    ///     field_name: The field for which we would like to get the value.
+    /// @param fieldName - The field for which we would like to get the value.
     ///
-    /// Returns the value if one is found, otherwise undefined.
+    /// @returns The value if one is found, otherwise undefined.
     /// The type of the value depends on the field.
     #[napi]
     pub fn get_first(&self, env: Env, field_name: String) -> Result<Unknown> {
@@ -927,10 +916,9 @@ impl Document {
 
     /// Get all values associated with the given field.
     ///
-    /// Args:
-    ///     field_name: The field for which we would like to get the values.
+    /// @param fieldName - The field for which we would like to get the values.
     ///
-    /// Returns an array of values.
+    /// @returns An array of values.
     /// The type of the value depends on the field.
     #[napi]
     pub fn get_all(&self, env: Env, field_name: String) -> Result<Unknown> {

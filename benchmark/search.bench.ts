@@ -1,5 +1,5 @@
 import { bench, describe, beforeAll, afterAll } from 'vitest'
-import { SchemaBuilder, Index, Document } from '../index'
+import { SchemaBuilder, Index, Document, Searcher } from '../index'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -7,8 +7,8 @@ import { join } from 'path'
 describe('Search Performance', () => {
   let tempDir: string
   let schema: any
-  let index: any
-  let searcher: any
+  let index: Index
+  let searcher: Searcher
 
   beforeAll(() => {
     // Setup index with test data
@@ -113,7 +113,7 @@ describe('Search Performance', () => {
 
     // Explain top results
     for (const hit of results.hits.slice(0, 3)) {
-      query.explain(searcher, hit.address)
+      query.explain(searcher, hit.docAddress)
     }
   })
 })

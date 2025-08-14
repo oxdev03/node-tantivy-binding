@@ -57,84 +57,74 @@ export declare class Document {
   /**
    * Add a text value to the document.
    *
-   * Args:
-   *     field_name: The field name for which we are adding the text.
-   *     text: The text that will be added to the document.
+   * @param fieldName - The field name for which we are adding the text.
+   * @param text - The text that will be added to the document.
    */
   addText(fieldName: string, text: string): void
   /**
    * Add an unsigned integer value to the document.
    *
-   * Args:
-   *     field_name: The field name for which we are adding the unsigned integer.
-   *     value: The integer that will be added to the document.
+   * @param fieldName - The field name for which we are adding the unsigned integer.
+   * @param value - The integer that will be added to the document.
    */
   addUnsigned(fieldName: string, value: number): void
   /**
    * Add a signed integer value to the document.
    *
-   * Args:
-   *     field_name: The field name for which we are adding the integer.
-   *     value: The integer that will be added to the document.
+   * @param fieldName - The field name for which we are adding the integer.
+   * @param value - The integer that will be added to the document.
    */
   addInteger(fieldName: string, value: number): void
   /**
    * Add a float value to the document.
    *
-   * Args:
-   *     field_name: The field name for which we are adding the value.
-   *     value: The float that will be added to the document.
+   * @param fieldName - The field name for which we are adding the value.
+   * @param value - The float that will be added to the document.
    */
   addFloat(fieldName: string, value: number): void
   /**
    * Add a boolean value to the document.
    *
-   * Args:
-   *     field_name: The field name for which we are adding the value.
-   *     value: The boolean that will be added to the document.
+   * @param fieldName - The field name for which we are adding the value.
+   * @param value - The boolean that will be added to the document.
    */
   addBoolean(fieldName: string, value: boolean): void
   /**
    * Add a date value to the document.
    *
-   * Args:
-   *     field_name: The field name for which we are adding the date.
-   *     value: The date timestamp in milliseconds (JavaScript time) that will be added to the document.
+   * @param fieldName - The field name for which we are adding the date.
+   * @param timestampMillis - The date timestamp in milliseconds (JavaScript time) that will be added to the document.
    */
   addDate(fieldName: string, timestampMillis: number): void
   /**
    * Add a facet value to the document.
-   * Args:
-   *     field_name: The field name for which we are adding the facet.
-   *     value: The Facet that will be added to the document.
+   * @param fieldName - The field name for which we are adding the facet.
+   * @param facet - The Facet that will be added to the document.
    */
   addFacet(fieldName: string, facet: Facet): void
   /**
    * Add a bytes value to the document.
    *
-   * Args:
-   *     field_name: The field for which we are adding the bytes.
-   *     value: The bytes (as Buffer or Uint8Array) that will be added to the document.
+   * @param fieldName - The field for which we are adding the bytes.
+   * @param bytes - The bytes (as Buffer or Uint8Array) that will be added to the document.
    */
   addBytes(fieldName: string, bytes: Uint8Array): void
   /**
    * Add a JSON value to the document.
    *
-   * Args:
-   *     field_name: The field for which we are adding the JSON.
-   *     value: The JSON object that will be added to the document.
+   * @param fieldName - The field for which we are adding the JSON.
+   * @param value - The JSON object that will be added to the document.
    *
-   * Raises an error if the JSON is invalid.
+   * @throws Raises an error if the JSON is invalid.
    */
   addJson(fieldName: string, value: object): void
   /**
    * Add an IP address value to the document.
    *
-   * Args:
-   *     field_name: The field for which we are adding the IP address.
-   *     value: The IP address string that will be added to the document.
+   * @param fieldName - The field for which we are adding the IP address.
+   * @param value - The IP address string that will be added to the document.
    *
-   * Raises an error if the IP address is invalid.
+   * @throws Raises an error if the IP address is invalid.
    */
   addIpAddr(fieldName: string, value: string): void
   /** Returns the number of added fields that have been added to the document */
@@ -144,20 +134,18 @@ export declare class Document {
   /**
    * Get the first value associated with the given field.
    *
-   * Args:
-   *     field_name: The field for which we would like to get the value.
+   * @param fieldName - The field for which we would like to get the value.
    *
-   * Returns the value if one is found, otherwise undefined.
+   * @returns The value if one is found, otherwise undefined.
    * The type of the value depends on the field.
    */
   getFirst(fieldName: string): unknown
   /**
    * Get all values associated with the given field.
    *
-   * Args:
-   *     field_name: The field for which we would like to get the values.
+   * @param fieldName - The field for which we would like to get the values.
    *
-   * Returns an array of values.
+   * @returns An array of values.
    * The type of the value depends on the field.
    */
   getAll(fieldName: string): unknown
@@ -333,8 +321,7 @@ export declare class FilterStatic {
   /**
    * RemoveLongFilter
    *
-   * Args:
-   * - length_limit (number): max character length of token.
+   * @param lengthLimit - max character length of token.
    */
   static removeLong(lengthLimit: number): Filter
   /** Stemmer */
@@ -342,8 +329,7 @@ export declare class FilterStatic {
   /**
    * StopWordFilter (builtin stop word list)
    *
-   * Args:
-   * - language (string): Stop words list language.
+   * @param language - Stop words list language.
    *   Valid values: {
    *     "arabic", "danish", "dutch", "english", "finnish", "french", "german", "greek",
    *     "hungarian", "italian", "norwegian", "portuguese", "romanian", "russian",
@@ -357,8 +343,7 @@ export declare class FilterStatic {
    * This variant of Filter.stopword() lets you provide
    * your own custom list of stopwords.
    *
-   * Args:
-   * - stopwords (Array<string>): a list of words to be removed.
+   * @param stopwords - a list of words to be removed.
    */
   static customStopword(stopwords: Array<string>): Filter
   /**
@@ -366,8 +351,7 @@ export declare class FilterStatic {
    *
    * https://docs.rs/tantivy/latest/tantivy/tokenizer/struct.SplitCompoundWords.html
    *
-   * Args:
-   * - constituent_words (Array<string>): words that make up compound word (must be in order).
+   * @param constituentWords - words that make up compound word (must be in order).
    *
    * Example:
    *
@@ -384,11 +368,10 @@ export declare class FilterStatic {
 /**
  * Create a new index object.
  *
- * Args:
- *     schema: The schema of the index.
- *     path: The path where the index should be stored. If
+ * @param schema - The schema of the index.
+ * @param path - The path where the index should be stored. If
  *         no path is provided, the index will be stored in memory.
- *     reuse: Should we open an existing index if one exists
+ * @param reuse - Should we open an existing index if one exists
  *         or always create a new one.
  *
  * If an index already exists it will be opened and reused. Raises error
@@ -403,15 +386,14 @@ export declare class Index {
    * The writer will be multithreaded and the provided heap size will be
    * split between the given number of threads.
    *
-   * Args:
-   *     overall_heap_size: The total target heap memory usage of
+   * @param heapSize - The total target heap memory usage of
    *         the writer. Tantivy requires that this can't be less
    *         than 3000000 *per thread*. Lower values will result in more
    *         frequent internal commits when adding documents (slowing down
    *         write progress), and larger values will results in fewer
    *         commits but greater memory usage. The best value will depend
    *         on your specific use case.
-   *     num_threads: The number of threads that the writer
+   * @param numThreads - The number of threads that the writer
    *         should use. If this value is 0, tantivy will choose
    *         automatically the number of threads.
    *
@@ -421,10 +403,9 @@ export declare class Index {
   /**
    * Configure the index reader.
    *
-   * Args:
-   *     reload_policy: The reload policy that the
+   * @param reloadPolicy - The reload policy that the
    *         IndexReader should use. Can be `Manual` or `OnCommit`.
-   *     num_warmers: The number of searchers that the
+   * @param numWarmers - The number of searchers that the
    *         reader should create.
    */
   configReader(reloadPolicy?: string | undefined | null, numWarmers?: number | undefined | null): void
@@ -437,8 +418,7 @@ export declare class Index {
   searcher(): Searcher
   /**
    * Check if the given path contains an existing index.
-   * Args:
-   *     path: The path where tantivy will search for an index.
+   * @param path - The path where tantivy will search for an index.
    *
    * Returns True if an index exists at the given path, False otherwise.
    *
@@ -458,16 +438,15 @@ export declare class Index {
   /**
    * Parse a query
    *
-   * Args:
-   *     query: the query, following the tantivy query language.
+   * @param query - the query, following the tantivy query language.
    *
-   *     default_fields_names: A list of fields used to search if no
+   * @param defaultFieldNames - A list of fields used to search if no
    *         field is specified in the query.
    *
-   *     field_boosts: A dictionary keyed on field names which provides default boosts
+   * @param fieldBoosts - A dictionary keyed on field names which provides default boosts
    *         for the query constructed by this method.
    *
-   *     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+   * @param fuzzyFields - A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
    *         triples making queries constructed by this method fuzzy against the given fields
    *         and using the given parameters.
    *         `prefix` determines if terms which are prefixes of the given term match the query.
@@ -488,16 +467,15 @@ export declare class Index {
    * searching without precising field when no default field is provided...), they may get turned
    * into a "match-nothing" subquery.
    *
-   * Args:
-   *     query: the query, following the tantivy query language.
+   * @param query - the query, following the tantivy query language.
    *
-   *     default_fields_names: A list of fields used to search if no
+   * @param defaultFieldNames - A list of fields used to search if no
    *         field is specified in the query.
    *
-   *     field_boosts: A dictionary keyed on field names which provides default boosts
+   * @param fieldBoosts - A dictionary keyed on field names which provides default boosts
    *         for the query constructed by this method.
    *
-   *     fuzzy_fields: A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
+   * @param fuzzyFields - A dictionary keyed on field names which provides (prefix, distance, transpose_cost_one)
    *         triples making queries constructed by this method fuzzy against the given fields
    *         and using the given parameters.
    *         `prefix` determines if terms which are prefixes of the given term match the query.
@@ -599,9 +577,8 @@ export declare class IndexWriter {
    * `delete_documents_by_query` method instead, which will delete documents
    * matching the given query using the same query parser as used in search queries.
    *
-   * Args:
-   *     field_name: The field name for which we want to filter deleted docs.
-   *     field_value: JavaScript value with the value we want to filter.
+   * @param fieldName - The field name for which we want to filter deleted docs.
+   * @param fieldValue - JavaScript value with the value we want to filter.
    *
    * If the field_name is not on the schema raises error.
    * If the field_value is not supported raises error.
@@ -610,8 +587,7 @@ export declare class IndexWriter {
   /**
    * Delete all documents matching a given query.
    *
-   * Args:
-   *    query: The query to filter the deleted documents.
+   * @param query - The query to filter the deleted documents.
    *
    * If the query is not valid raises error.
    * If the query is not supported raises error.
@@ -888,24 +864,23 @@ export declare class Searcher {
   /**
    * Search the index with the given query and collect results.
    *
-   * Args:
-   *     query (Query): The query that will be used for the search.
-   *     limit (int, optional): The maximum number of search results to
+   * @param query - The query that will be used for the search.
+   * @param limit - The maximum number of search results to
    *         return. Defaults to 10.
-   *     count (bool, optional): Should the number of documents that match
+   * @param count - Should the number of documents that match
    *         the query be returned as well. Defaults to true.
-   *     order_by_field (Field, optional): A schema field that the results
+   * @param orderByField - A schema field that the results
    *         should be ordered by. The field must be declared as a fast field
    *         when building the schema. Note, this only works for unsigned
    *         fields.
-   *     offset (Field, optional): The offset from which the results have
+   * @param offset - The offset from which the results have
    *         to be returned.
-   *     order (Order, optional): The order in which the results
+   * @param order - The order in which the results
    *         should be sorted. If not specified, defaults to descending.
    *
-   * Returns `SearchResult` object.
+   * @returns SearchResult object.
    *
-   * Raises a ValueError if there was an error with the search.
+   * @throws ValueError if there was an error with the search.
    */
   search(
     query: Query,
@@ -928,11 +903,10 @@ export declare class Searcher {
   /**
    * Fetches a document from Tantivy's store given a DocAddress.
    *
-   * Args:
-   *     doc_address (DocAddress): The DocAddress that is associated with
+   * @param docAddress - The DocAddress that is associated with
    *         the document that we wish to fetch.
    *
-   * Returns the Document, raises ValueError if the document can't be found.
+   * @returns The Document, raises ValueError if the document can't be found.
    */
   doc(docAddress: DocAddress): Document
 }
@@ -970,10 +944,8 @@ export declare class SyntaxError {
 export declare class TextAnalyzer {
   /**
    * Tokenize a string
-   * Args:
-   * - text (string): text to tokenize.
-   * Returns:
-   * - Array<string>: a list of tokens/words.
+   * @param text - text to tokenize.
+   * @returns - a list of tokens/words.
    */
   analyze(text: string): Array<string>
 }
@@ -997,10 +969,8 @@ export declare class TextAnalyzerBuilder {
   /**
    * Add filter to the builder.
    *
-   * Args:
-   * - filter (Filter): a Filter object.
-   * Returns:
-   * - TextAnalyzerBuilder: A new instance of the builder
+   * @param filter - a Filter object.
+   * @returns - A new instance of the builder
    *
    * Note: The builder is _not_ mutated in-place.
    */
@@ -1008,8 +978,7 @@ export declare class TextAnalyzerBuilder {
   /**
    * Build final TextAnalyzer object.
    *
-   * Returns:
-   * - TextAnalyzer with tokenizer and filters baked in.
+   * @returns - TextAnalyzer with tokenizer and filters baked in.
    *
    * Tip: TextAnalyzer's `analyze(text) -> tokens` method lets you
    * easily check if your analyzer is working as expected.
@@ -1033,10 +1002,9 @@ export declare class TokenizerStatic {
   /**
    * NgramTokenizer
    *
-   * Args:
-   * - min_gram (number): Minimum character length of each ngram.
-   * - max_gram (number): Maximum character length of each ngram.
-   * - prefix_only (boolean, optional): If true, ngrams must count from the start of the word.
+   * @param minGram - Minimum character length of each ngram.
+   * @param maxGram - Maximum character length of each ngram.
+   * @param prefixOnly - If true, ngrams must count from the start of the word.
    */
   static ngram(
     minGram?: number | undefined | null,
