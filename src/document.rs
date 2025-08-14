@@ -343,7 +343,15 @@ fn value_to_js(env: Env, value: &Value) -> Result<Unknown> {
             env.to_js_value(&map)?
         }
         Value::Bool(b) => env.to_js_value(b)?,
-        Value::IpAddr(i) => env.to_js_value(&i.to_string())?,
+        Value::IpAddr(i) => {
+            // Convert IPv4-mapped IPv6 addresses back to IPv4 format for display
+            let addr_str = if let Some(ipv4) = i.to_ipv4_mapped() {
+                ipv4.to_string()
+            } else {
+                i.to_string()
+            };
+            env.to_js_value(&addr_str)?
+        },
         Value::Null => env.to_js_value(&())?,
     })
 }
@@ -367,7 +375,15 @@ fn value_to_serde_json(value: &Value) -> serde_json::Value {
                 .map(|&byte| serde_json::Value::Number(serde_json::Number::from(byte)))
                 .collect(),
         ),
-        Value::IpAddr(ip) => serde_json::Value::String(ip.to_string()),
+        Value::IpAddr(ip) => {
+            // Convert IPv4-mapped IPv6 addresses back to IPv4 format for display
+            let addr_str = if let Some(ipv4) = ip.to_ipv4_mapped() {
+                ipv4.to_string()
+            } else {
+                ip.to_string()
+            };
+            serde_json::Value::String(addr_str)
+        },
         Value::Object(obj) => {
             let map: serde_json::Map<String, serde_json::Value> = obj
                 .iter()

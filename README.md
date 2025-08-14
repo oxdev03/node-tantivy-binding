@@ -179,12 +179,6 @@ Document.fromDict({ json: 'hello' }, schema) // Should reject strings
 **Python**: Uses datetime objects
 **TODO**: Consider more intuitive date API
 
-##### IP Address Format
-
-**Current**: Returns IPv6-mapped format for IPv4
-**Python**: Preserves original format
-**TODO**: Consider format consistency
-
 ## Architecture
 
 Built with:

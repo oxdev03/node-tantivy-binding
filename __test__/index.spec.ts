@@ -402,7 +402,7 @@ describe('TestClass', () => {
     const result1 = searcher.search(query1)
     expect(result1.hits.length).toBe(1)
     const doc1 = searcher.doc(result1.hits[0].docAddress).toDict() as TestDoc
-    expect(doc1.ip_addr?.[0]).toBe('::ffff:10.0.0.1') // Node.js version returns IPv6-mapped format
+    expect(doc1.ip_addr?.[0]).toBe('10.0.0.1') // Now returns original IPv4 format like Python
 
     // 2 results
     const fromIp2 = '10.0.0.0'
@@ -424,6 +424,8 @@ describe('TestClass', () => {
     const query4 = ramIndexWithIpAddrField.parseQuery(`ip_addr:[${fromIp4} TO ${toIp4}]`)
     const result4 = searcher.search(query4)
     expect(result4.hits.length).toBe(1)
+    const doc4 = searcher.doc(result4.hits[0].docAddress).toDict() as TestDoc
+    expect(doc4.ip_addr?.[0]).toBe('::1') // IPv6
 
     // 0 results
     const fromIp5 = '200.0.0.0'
@@ -750,7 +752,7 @@ describe('TestClass', () => {
         },
         schema,
       )
-    }).toThrowErrorMatchingInlineSnapshot()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Expected Buffer for bytes field]`)
 
     expect(() => {
       Document.fromDict({ bytes: [1, 2, 3] }, schema)
