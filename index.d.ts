@@ -1012,16 +1012,6 @@ export declare class UnsupportedQueryError {
   toString(): string
 }
 
-/** Bytes field options */
-export interface BytesFieldOptions {
-  /** Store the field value (can be retrieved from search results) */
-  stored?: boolean
-  /** Index the field (enables searching) */
-  indexed?: boolean
-  /** Fast field access (column-oriented storage) */
-  fast?: boolean
-}
-
 /**
  * DocAddress contains all the necessary information to identify a document
  * given a Searcher object.
@@ -1034,6 +1024,28 @@ export interface DocAddress {
   segmentOrd: number
   doc: number
 }
+
+/** Common field options for most field types */
+export interface FieldOptions {
+  /** Store the field value (can be retrieved from search results) */
+  stored?: boolean
+  /** Index the field (enables searching) */
+  indexed?: boolean
+  /** Fast field access (column-oriented storage) */
+  fast?: boolean
+}
+
+/** Numeric field options (for integers, floats, dates) */
+export type NumericFieldOptions = FieldOptions
+
+/** Bytes field options */
+export type BytesFieldOptions = FieldOptions
+
+/** IP address field options */
+export type IpAddrFieldOptions = FieldOptions
+
+/** JSON field options (same as text fields) */
+export type JsonFieldOptions = TextFieldOptions
 
 /** Tantivy's FieldType */
 export declare const enum FieldType {
@@ -1051,26 +1063,6 @@ export declare const enum FieldType {
 
 /** Get the version of the library */
 export declare function getVersion(): string
-
-/** IP address field options */
-export interface IpAddrFieldOptions {
-  /** Store the field value (can be retrieved from search results) */
-  stored?: boolean
-  /** Index the field (enables searching) */
-  indexed?: boolean
-  /** Fast field access (column-oriented storage) */
-  fast?: boolean
-}
-
-/** Numeric field options (for integers, floats, dates) */
-export interface NumericFieldOptions {
-  /** Store the field value (can be retrieved from search results) */
-  stored?: boolean
-  /** Index the field (enables searching) */
-  indexed?: boolean
-  /** Fast field access (column-oriented storage) */
-  fast?: boolean
-}
 
 /** Represents a Tantivy Occur type for BooleanQuery */
 export declare const enum Occur {

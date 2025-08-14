@@ -71,7 +71,15 @@ pub struct IpAddrFieldOptions {
 }
 
 /// JSON field options (same as text fields)
-pub type JsonFieldOptions = TextFieldOptions;
+#[napi(object)]
+pub struct JsonFieldOptions {
+  /// Store the field value (can be retrieved from search results)
+  pub stored: Option<bool>,
+  /// Index the field (enables searching)
+  pub indexed: Option<bool>,
+  /// Fast field access (column-oriented storage)
+  pub fast: Option<bool>,
+}
 
 #[napi]
 impl SchemaBuilder {
