@@ -1349,7 +1349,7 @@ describe('TestQuery', () => {
     const titleQuery = Query.termQuery(ramIndex.schema, 'title', 'sea')
     const bodyQuery = Query.termQuery(ramIndex.schema, 'body', 'man')
 
-    // Create queries manually since booleanQuery might have API differences
+    // Test individual queries first
     const searcher = ramIndex.searcher()
 
     // Test title query alone
@@ -1359,6 +1359,31 @@ describe('TestQuery', () => {
     // Test body query alone
     result = searcher.search(bodyQuery)
     expect(result.hits.length).toBe(1)
+
+    // Test boolean query with MUST (AND) - should find documents that have both 'sea' in title AND 'man' in body
+    const mustQuery = Query.booleanQuery([
+      { occur: 0, query: titleQuery }, // Must
+      { occur: 0, query: bodyQuery }, // Must
+    ])
+    result = searcher.search(mustQuery)
+    expect(result.hits.length).toBe(1) // "The Old Man and the Sea" has both
+
+    // Test boolean query with SHOULD (OR) - should find documents that have either 'sea' in title OR 'man' in body
+    const shouldQuery = Query.booleanQuery([
+      { occur: 1, query: titleQuery }, // Should
+      { occur: 1, query: bodyQuery }, // Should
+    ])
+    result = searcher.search(shouldQuery)
+    expect(result.hits.length).toBe(1) // Still 1 because both terms are in the same document
+
+    // Test with MUST_NOT - find documents that have 'sea' in title but NOT 'winter' in body
+    const winterBodyQuery = Query.termQuery(ramIndex.schema, 'body', 'winter')
+    const mustNotQuery = Query.booleanQuery([
+      { occur: 0, query: titleQuery }, // Must have 'sea' in title
+      { occur: 2, query: winterBodyQuery }, // Must NOT have 'winter' in body
+    ])
+    result = searcher.search(mustNotQuery)
+    expect(result.hits.length).toBe(1) // "The Old Man and the Sea" matches
   })
 
   it('test_boost_query', () => {
