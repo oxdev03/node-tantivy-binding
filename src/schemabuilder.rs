@@ -70,17 +70,6 @@ pub struct IpAddrFieldOptions {
   pub fast: Option<bool>,
 }
 
-/// JSON field options (same as text fields)
-#[napi(object)]
-pub struct JsonFieldOptions {
-  /// Store the field value (can be retrieved from search results)
-  pub stored: Option<bool>,
-  /// Index the field (enables searching)
-  pub indexed: Option<bool>,
-  /// Fast field access (column-oriented storage)
-  pub fast: Option<bool>,
-}
-
 #[napi]
 impl SchemaBuilder {
   /// Create a new SchemaBuilder.
@@ -235,7 +224,7 @@ impl SchemaBuilder {
   pub fn add_json_field(
     &mut self,
     name: String,
-    options: Option<JsonFieldOptions>,
+    options: Option<TextFieldOptions>,
   ) -> Result<&Self> {
     let builder = self
       .inner
