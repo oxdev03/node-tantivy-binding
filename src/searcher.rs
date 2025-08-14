@@ -259,8 +259,8 @@ impl Searcher {
 #[napi(object)]
 #[derive(Clone, Debug, Deserialize, PartialEq, PartialOrd, Eq, Ord, Serialize)]
 pub struct DocAddress {
-  pub segment_ord: tv::SegmentOrdinal,
-  pub doc: tv::DocId,
+  pub segment_ord: u32,
+  pub doc: u32,
 }
 
 impl From<&tv::DocAddress> for DocAddress {

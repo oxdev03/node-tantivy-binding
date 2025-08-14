@@ -99,9 +99,9 @@ export declare class Document {
    *
    * Args:
    *     field_name: The field name for which we are adding the date.
-   *     value: The date timestamp in seconds that will be added to the document.
+   *     value: The date timestamp in milliseconds (JavaScript time) that will be added to the document.
    */
-  addDate(fieldName: string, timestampSecs: number): void
+  addDate(fieldName: string, timestampMillis: number): void
   /**
    * Add a facet value to the document.
    * Args:
@@ -114,9 +114,9 @@ export declare class Document {
    *
    * Args:
    *     field_name: The field for which we are adding the bytes.
-   *     value: The bytes that will be added to the document.
+   *     value: The bytes (as Buffer or Uint8Array) that will be added to the document.
    */
-  addBytes(fieldName: string, bytes: Array<number>): void
+  addBytes(fieldName: string, bytes: Uint8Array): void
   /**
    * Add a JSON value to the document.
    *
@@ -517,7 +517,7 @@ export declare class Index {
    * this is one of the places where Tantivy uses 'tokenizer' to refer to a
    * TextAnalyzer instance.)
    */
-  registerTokenizer(name: string, analyzer: CrateTextAnalyzer): void
+  registerTokenizer(name: string, analyzer: TextAnalyzer): void
 }
 
 /**
@@ -1077,8 +1077,8 @@ export interface BytesFieldOptions {
  * hold by a Searcher.
  */
 export interface DocAddress {
-  segmentOrd: SegmentOrdinal
-  doc: DocId
+  segmentOrd: number
+  doc: number
 }
 
 /** Tantivy's FieldType */

@@ -15,7 +15,6 @@ describe('TestEscapes', () => {
     // from tantivy versions prior to 0.24.0 in which the following would
     // raise a `ValueError`.
     const query = ramIndex.parseQuery('sea\\"', ['title', 'body'])
-    console.log(query.toString())
     expect(query).toBeDefined()
   })
 

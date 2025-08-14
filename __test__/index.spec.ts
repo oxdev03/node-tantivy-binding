@@ -437,7 +437,7 @@ describe('TestClass', () => {
     // no "bod" field
     expect(() => {
       ramIndex.parseQuery('bod:men', ['title', 'body'])
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Field does not exist: 'bod']`)
   })
 
   it('test_query_explain', () => {
@@ -558,7 +558,9 @@ describe('TestClass', () => {
     // In Node.js version, this throws an error about fast field configuration
     expect(() => {
       searcher.search(query, 10, true, 'order')
-    }).toThrow(/Field "order" is not configured as fast field/)
+    }).toThrowErrorMatchingInlineSnapshot(
+      `[Error: An invalid argument was passed: 'Field "order" is not configured as fast field']`,
+    )
   })
 
   it('test_order_by_search_date', () => {
@@ -636,7 +638,7 @@ describe('TestClass', () => {
     // Accessing the writer again should result in an error.
     expect(() => {
       writer.waitMergingThreads()
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: IndexWriter was consumed and no longer in a valid state]`)
 
     index.reload()
 
@@ -707,7 +709,7 @@ describe('TestClass', () => {
         },
         schema,
       )
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Expected F64 type for field float, got unexpected value]`)
 
     // Arrays are supported for single value fields in Node.js version (unlike Python)
     Document.fromDict(
@@ -748,23 +750,23 @@ describe('TestClass', () => {
         },
         schema,
       )
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot()
 
     expect(() => {
       Document.fromDict({ bytes: [1, 2, 3] }, schema)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Expected Buffer for bytes field]`)
 
     expect(() => {
       Document.fromDict({ bytes: [1, 2, 256] }, schema)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Expected Buffer for bytes field]`)
 
     expect(() => {
       Document.fromDict({ bytes: 'hello' }, schema)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Expected Buffer for bytes field]`)
 
     expect(() => {
       Document.fromDict({ bytes: [1024, 'there'] }, schema)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Expected Buffer for bytes field]`)
   })
 
   it('test_doc_from_dict_ip_addr_validation', () => {
@@ -775,11 +777,11 @@ describe('TestClass', () => {
 
     expect(() => {
       Document.fromDict({ ip: 12309812348 }, schema)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: invalid IP address syntax]`)
 
     expect(() => {
       Document.fromDict({ ip: '256.100.0.1' }, schema)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: invalid IP address syntax]`)
 
     expect(() => {
       Document.fromDict(
@@ -788,7 +790,7 @@ describe('TestClass', () => {
         },
         schema,
       )
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: invalid IP address syntax]`)
 
     expect(() => {
       Document.fromDict(
@@ -797,7 +799,7 @@ describe('TestClass', () => {
         },
         schema,
       )
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: invalid IP address syntax]`)
   })
 
   it('test_doc_from_dict_json_validation', () => {
@@ -962,8 +964,7 @@ describe('TestDocument', () => {
     doc.addDate('date', testDate.getTime())
 
     const dict = doc.toDict() as TestDoc
-    // Note: Node.js version stores dates with nanosecond precision
-    expect(dict.date?.[0]).toContain('2021-01-01T00:00:00.000')
+    expect(dict.date?.[0]).toBe(testDate.getTime())
   })
 
   it('test_document_repr', () => {
@@ -1438,13 +1439,11 @@ describe('TestQuery', () => {
     expect(result.hits.length).toBeGreaterThanOrEqual(0)
   })
 
-  // Additional missing tests to get closer to Python's 70+ tests
-
   it('test_range_query_invalid_types', () => {
     // Test that invalid range queries throw errors
     expect(() => {
       Query.rangeQuery(ramIndexNumericFields.schema, 'nonexistent_field', FieldType.I64, 1, 10, true, true)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Field 'nonexistent_field' is not defined in the schema.]`)
   })
 
   it('test_delete_documents_by_term', () => {
@@ -1492,12 +1491,12 @@ describe('TestQuery', () => {
     // Test with text field (should be unsupported)
     expect(() => {
       Query.rangeQuery(index.schema, 'title', FieldType.Str, 'a', 'z', true, true)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Text fields are not supported for range queries.]`)
 
     // Test with field that doesn't exist
     expect(() => {
       Query.rangeQuery(index.schema, 'nonexistent', FieldType.I64, 1, 10, true, true)
-    }).toThrow()
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Field 'nonexistent' is not defined in the schema.]`)
   })
 })
 
@@ -1553,7 +1552,7 @@ describe('TestTokenizers', () => {
     // within the Builder, not the wrapped Tokenizer.
     expect(() => {
       new TextAnalyzerBuilder(TokenizerStatic.regex(tokenPattern))
-    }).toThrow(/Invalid regex pattern|regex/)
+    }).toThrowErrorMatchingInlineSnapshot(`[Error: Invalid regex pattern: An invalid argument was passed: '(?i)[a-z+']`)
   })
 
   it('test_build_ngram_tokenizer', () => {

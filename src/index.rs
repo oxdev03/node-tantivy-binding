@@ -8,7 +8,7 @@ use napi_derive::napi;
 
 use crate::{
   document::Document, query::Query, schema::Schema, searcher::Searcher, to_napi_error,
-  tokenizer::TextAnalyzer as CrateTextAnalyzer,
+  tokenizer::TextAnalyzer,
 };
 use tantivy as tv;
 
@@ -451,7 +451,7 @@ impl Index {
   ///
   // Implementation notes: Skipped indirection of TokenizerManager.
   #[napi]
-  pub fn register_tokenizer(&self, name: String, analyzer: &CrateTextAnalyzer) {
+  pub fn register_tokenizer(&self, name: String, analyzer: &TextAnalyzer) {
     self
       .index
       .tokenizers()
