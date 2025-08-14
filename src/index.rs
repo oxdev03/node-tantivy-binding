@@ -440,10 +440,7 @@ impl Index {
     let parser = self.prepare_query_parser(default_field_names, field_boosts, fuzzy_fields)?;
 
     let (query, errors) = parser.parse_query_lenient(&query);
-    let error_messages: Vec<String> = errors
-      .into_iter()
-      .map(|err| format!("{:?}", err))
-      .collect();
+    let error_messages: Vec<String> = errors.into_iter().map(|err| format!("{:?}", err)).collect();
 
     Ok((Query { inner: query }, error_messages))
   }

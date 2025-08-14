@@ -87,16 +87,26 @@ impl Schema {
   /// Get field names in the schema
   #[napi]
   pub fn field_names(&self) -> Vec<String> {
-    self.inner.fields().map(|(_, field)| field.name().to_string()).collect()
+    self
+      .inner
+      .fields()
+      .map(|(_, field)| field.name().to_string())
+      .collect()
   }
 
   /// Get field type by name
   #[napi]
   pub fn get_field_type(&self, field_name: String) -> napi::Result<FieldType> {
-    let field = self.inner.get_field(&field_name)
-      .map_err(|_| napi::Error::new(napi::Status::InvalidArg, format!("Field '{}' not found", field_name)))?;
+    let field = self.inner.get_field(&field_name).map_err(|_| {
+      napi::Error::new(
+        napi::Status::InvalidArg,
+        format!("Field '{}' not found", field_name),
+      )
+    })?;
     let field_entry = self.inner.get_field_entry(field);
-    Ok(FieldType::from_tantivy_type(&field_entry.field_type().value_type()))
+    Ok(FieldType::from_tantivy_type(
+      &field_entry.field_type().value_type(),
+    ))
   }
 
   /// Check if a field exists in the schema

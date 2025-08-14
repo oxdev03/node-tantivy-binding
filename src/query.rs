@@ -182,24 +182,31 @@ impl Query {
   #[napi(factory)]
   pub fn boolean_query(subqueries: Vec<Object>) -> Result<Query> {
     let mut dyn_subqueries = Vec::new();
-    
+
     for subquery_obj in subqueries {
       // Extract the occur and query from the object
       // Expected format: { occur: Occur, query: Query }
-      let occur_value: Unknown = subquery_obj.get("occur")?
+      let occur_value: Unknown = subquery_obj
+        .get("occur")?
         .ok_or_else(|| Error::new(Status::InvalidArg, "Missing 'occur' field in subquery"))?;
-      let query_value: &Query = subquery_obj.get("query")?
+      let query_value: &Query = subquery_obj
+        .get("query")?
         .ok_or_else(|| Error::new(Status::InvalidArg, "Missing 'query' field in subquery"))?;
-      
+
       // Convert the occur value to our Occur enum
       let occur_num: u32 = occur_value.coerce_to_number()?.get_uint32()?;
       let occur = match occur_num {
         0 => tv::query::Occur::Must,
         1 => tv::query::Occur::Should,
         2 => tv::query::Occur::MustNot,
-        _ => return Err(Error::new(Status::InvalidArg, "Invalid occur value, must be 0 (Must), 1 (Should), or 2 (MustNot)"))
+        _ => {
+          return Err(Error::new(
+            Status::InvalidArg,
+            "Invalid occur value, must be 0 (Must), 1 (Should), or 2 (MustNot)",
+          ))
+        }
       };
-      
+
       dyn_subqueries.push((occur, query_value.inner.box_clone()));
     }
 
