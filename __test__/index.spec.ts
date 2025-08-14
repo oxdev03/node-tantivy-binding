@@ -7,6 +7,7 @@ import {
   Document,
   Index,
   SchemaBuilder,
+  Schema,
   Query,
   Order,
   FieldType,
@@ -67,6 +68,14 @@ describe('TestClass', () => {
   })
 
   it('test_simple_search_in_ram', () => {
+    // Test schema properties
+    expect(ramIndex.schema.numFields()).toBe(2)
+    expect(ramIndex.schema.fieldNames()).toEqual(['title', 'body'])
+    expect(ramIndex.schema.hasField('title')).toBe(true)
+    expect(ramIndex.schema.hasField('body')).toBe(true)
+    expect(ramIndex.schema.getFieldType('title')).toBe(FieldType.Str)
+    expect(ramIndex.schema.getFieldType('body')).toBe(FieldType.Str)
+
     const query = ramIndex.parseQuery('sea whale', ['title', 'body'])
     const result = ramIndex.searcher().search(query, 10)
     expect(result.hits.length).toBe(1)
@@ -286,6 +295,14 @@ describe('TestClass', () => {
   })
 
   it('test_and_query_numeric_fields', () => {
+    // Test numeric fields schema
+    expect(ramIndexNumericFields.schema.numFields()).toBe(4)
+    expect(ramIndexNumericFields.schema.fieldNames()).toEqual(['id', 'rating', 'is_good', 'body'])
+    expect(ramIndexNumericFields.schema.getFieldType('id')).toBe(FieldType.I64)
+    expect(ramIndexNumericFields.schema.getFieldType('rating')).toBe(FieldType.F64)
+    expect(ramIndexNumericFields.schema.getFieldType('is_good')).toBe(FieldType.Bool)
+    expect(ramIndexNumericFields.schema.getFieldType('body')).toBe(FieldType.Str)
+
     const searcher = ramIndexNumericFields.searcher()
 
     // 1 result
@@ -1058,7 +1075,7 @@ describe('TestDocument', () => {
 describe('TestJsonField', () => {
   it('test_query_from_json_field', () => {
     const schema = new SchemaBuilder()
-      .addJsonField('json', { stored: true, indexed: true })
+      .addJsonField('json', { stored: true })
       .addTextField('title', { stored: true })
       .build()
 
@@ -1123,14 +1140,18 @@ it('test_schema_eq', () => {
     .addTextField('content') // Different field name
     .build()
 
-  // Test schema equality via structure comparison (schemas might not serialize consistently)
-  expect(schema1).toBeDefined()
-  expect(schema2).toBeDefined()
-  expect(schema3).toBeDefined()
+  expect(schema1.toJson()).toEqual(schema2.toJson())
+  expect(schema1.toJson()).not.toEqual(schema3.toJson())
+  expect(schema2.toJson()).not.toEqual(schema3.toJson())
 
-  // Since JSON serialization might not work for schemas, just test basic functionality
-  expect(typeof schema1).toBe(typeof schema2)
-  expect(typeof schema1).toBe(typeof schema3)
+  // Test field existence
+  expect(schema1.hasField('title')).toBe(true)
+  expect(schema1.hasField('body')).toBe(true)
+  expect(schema1.hasField('content')).toBe(false)
+
+  expect(schema3.hasField('title')).toBe(true)
+  expect(schema3.hasField('content')).toBe(true)
+  expect(schema3.hasField('body')).toBe(false)
 })
 
 it('test_facet_eq', () => {
@@ -1150,7 +1171,7 @@ it('test_facet_eq', () => {
 })
 
 it('test_schema_pickle', () => {
-  // Test schema serialization (Node.js equivalent)
+  // Test schema serialization using new toJson/fromJson methods
   const originalSchema = new SchemaBuilder()
     .addIntegerField('id', { stored: true, indexed: true })
     .addTextField('body', { stored: true })
@@ -1160,23 +1181,7 @@ it('test_schema_pickle', () => {
     .addBytesField('bytes')
     .build()
 
-  // Since schemas don't have direct serialization in Node.js binding,
-  // we test that schemas with same configuration behave consistently
-  const duplicateSchema = new SchemaBuilder()
-    .addIntegerField('id', { stored: true, indexed: true })
-    .addTextField('body', { stored: true })
-    .addFloatField('rating', { stored: true, indexed: true })
-    .addDateField('date')
-    .addJsonField('json')
-    .addBytesField('bytes')
-    .build()
-
-  // Test that schemas with same configuration can create compatible indexes
-  const index1 = new Index(originalSchema)
-  const index2 = new Index(duplicateSchema)
-
-  expect(index1).toBeDefined()
-  expect(index2).toBeDefined()
+  expect(originalSchema.toJson()).toBe(Schema.fromJson(originalSchema.toJson()).toJson())
 })
 
 it('test_facet_pickle', () => {

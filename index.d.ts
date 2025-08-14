@@ -718,7 +718,22 @@ export declare class RangeMustNotHavePhraseError {
  * The schema is very strict. To build the schema the `SchemaBuilder` class is
  * provided.
  */
-export declare class Schema {}
+export declare class Schema {
+  /** Get a JSON representation of the schema */
+  toJson(): string
+  /** Create a schema from JSON */
+  static fromJson(json: string): Schema
+  /** Get the number of fields in the schema */
+  numFields(): number
+  /** Get field names in the schema */
+  fieldNames(): Array<string>
+  /** Get field type by name */
+  getFieldType(fieldName: string): FieldType
+  /** Check if a field exists in the schema */
+  hasField(fieldName: string): boolean
+  /** Get a string representation of the schema */
+  toString(): string
+}
 
 /**
  * A SchemaBuilder can be used to create a Schema.

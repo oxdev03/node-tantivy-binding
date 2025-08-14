@@ -1,4 +1,5 @@
 use napi_derive::napi;
+use serde_json;
 use tantivy as tv;
 use tantivy::schema::Schema as TantivySchema;
 
@@ -63,7 +64,52 @@ pub struct Schema {
 
 #[napi]
 impl Schema {
-  // Empty implementation to match tantivy-py which has no public methods
+  /// Get a JSON representation of the schema
+  #[napi]
+  pub fn to_json(&self) -> String {
+    serde_json::to_string(&self.inner).unwrap_or_else(|_| "{}".to_string())
+  }
+
+  /// Create a schema from JSON
+  #[napi]
+  pub fn from_json(json: String) -> napi::Result<Schema> {
+    let schema: TantivySchema = serde_json::from_str(&json)
+      .map_err(|e| napi::Error::new(napi::Status::InvalidArg, format!("Invalid JSON: {}", e)))?;
+    Ok(Schema::new(schema))
+  }
+
+  /// Get the number of fields in the schema
+  #[napi]
+  pub fn num_fields(&self) -> u32 {
+    self.inner.num_fields() as u32
+  }
+
+  /// Get field names in the schema
+  #[napi]
+  pub fn field_names(&self) -> Vec<String> {
+    self.inner.fields().map(|(_, field)| field.name().to_string()).collect()
+  }
+
+  /// Get field type by name
+  #[napi]
+  pub fn get_field_type(&self, field_name: String) -> napi::Result<FieldType> {
+    let field = self.inner.get_field(&field_name)
+      .map_err(|_| napi::Error::new(napi::Status::InvalidArg, format!("Field '{}' not found", field_name)))?;
+    let field_entry = self.inner.get_field_entry(field);
+    Ok(FieldType::from_tantivy_type(&field_entry.field_type().value_type()))
+  }
+
+  /// Check if a field exists in the schema
+  #[napi]
+  pub fn has_field(&self, field_name: String) -> bool {
+    self.inner.get_field(&field_name).is_ok()
+  }
+
+  /// Get a string representation of the schema
+  #[napi]
+  pub fn to_string(&self) -> String {
+    format!("{:?}", self.inner)
+  }
 }
 
 impl Schema {
