@@ -20,6 +20,8 @@ If no binary is present for your operating system, the bindings will be built fr
 
 # Quick Start
 
+For more detailed examples, see the [tutorials](./docs/tutorials.md).
+
 ```javascript
 import { SchemaBuilder, FieldType, Index, Document } from '@oxdev03-org/node-tantivy-binding'
 
