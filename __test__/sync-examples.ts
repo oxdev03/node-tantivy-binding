@@ -40,16 +40,20 @@ export function syncFromSource(markdownFile: string): { updated: boolean; change
       throw new Error(`Source file not found: ${ref.sourceFile}`)
     }
 
-    const sourceContent = fs.readFileSync(sourceFilePath, 'utf-8')
+    // Read the source file, replace the import path, and remove trailing newlines
+    const sourceContent = fs
+      .readFileSync(sourceFilePath, 'utf-8')
+      .replace("'../index'", "'@oxdev03/node-tantivy-binding'")
+      .replace(/[\r\n]+$/, '')
     const commentTag = `<!-- example:${ref.name} source:${ref.sourceFile} -->`
 
     // Find and replace the code block after the comment
     const regex = new RegExp(
-      `(${commentTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\s*\`\`\`typescript[\\s\\S]*?\`\`\``,
+      `(${commentTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(\n\n)\`\`\`typescript[\\s\\S]*?\`\`\``,
       'g',
     )
 
-    const newContent = content.replace(regex, `$1\n\`\`\`typescript\n${sourceContent}\n\`\`\``)
+    const newContent = content.replace(regex, `$1$2\`\`\`typescript\n${sourceContent}\n\`\`\``)
     if (newContent !== content) {
       changes.push(`Updated ${ref.name} from ${ref.sourceFile}`)
       content = newContent
