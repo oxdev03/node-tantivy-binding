@@ -22,6 +22,8 @@ writer.addDocument(doc)
 writer.commit()
 writer.waitMergingThreads()
 
+index.reload()
+
 const complexQuery = Query.booleanQuery([
   {
     occur: Occur.Must,

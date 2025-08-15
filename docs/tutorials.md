@@ -4,8 +4,6 @@
 
 ## Building an index and populating it
 
-<!-- example:basic-indexing source:../examples/basic-indexing.ts -->
-
 ```typescript
 import { SchemaBuilder, Index } from '@oxdev03/node-tantivy-binding'
 
@@ -261,6 +259,8 @@ writer.addDocument(doc)
 writer.commit()
 writer.waitMergingThreads()
 
+index.reload()
+
 const complexQuery = Query.booleanQuery([
   {
     occur: Occur.Must,
@@ -318,6 +318,8 @@ doc.addText(
 writer.addDocument(doc)
 writer.commit()
 writer.waitMergingThreads()
+
+index.reload()
 
 const complexQuery = Query.booleanQuery([
   {
