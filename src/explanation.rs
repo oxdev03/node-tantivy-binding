@@ -19,7 +19,7 @@ impl Explanation {
   /// Returns a JSON representation of the explanation.
   /// This contains detailed information about how the document matched the query
   /// and how the score was calculated.
-  #[napi]
+  #[napi(js_name = "toJSON")]
   pub fn to_json(&self) -> String {
     self.inner.to_pretty_json()
   }

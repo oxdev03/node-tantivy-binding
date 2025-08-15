@@ -212,7 +212,7 @@ export declare class Explanation {
    * This contains detailed information about how the document matched the query
    * and how the score was calculated.
    */
-  toJson(): string
+  toJSON(): string
   /** Returns a string representation of the explanation. */
   toString(): string
   /** Gets the score value from the explanation. */
@@ -727,7 +727,7 @@ export declare class RangeMustNotHavePhraseError {
  */
 export declare class Schema {
   /** Get a JSON representation of the schema */
-  toJson(): string
+  toJSON(): string
   /** Create a schema from JSON */
   static fromJson(json: string): Schema
   /** Get the number of fields in the schema */

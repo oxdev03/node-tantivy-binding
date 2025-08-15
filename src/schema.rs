@@ -65,7 +65,7 @@ pub struct Schema {
 #[napi]
 impl Schema {
   /// Get a JSON representation of the schema
-  #[napi]
+  #[napi(js_name = "toJSON")]
   pub fn to_json(&self) -> String {
     serde_json::to_string(&self.inner).unwrap_or_else(|_| "{}".to_string())
   }
