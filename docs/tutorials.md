@@ -78,7 +78,7 @@ const schema = schemaBuilderTok.build()
 
 // Assertions
 // Test that the field was added with the correct tokenizer
-const schemaJson = schema.toJson()
+const schemaJson = JSON.stringify(schema)
 console.assert(schemaJson.includes('body'), 'Schema should contain body field')
 ```
 
@@ -343,7 +343,7 @@ if (result.hits.length > 0) {
   const explanation = complexQuery.explain(searcher, hit.docAddress)
 
   // The explanation provides a JSON representation of the scoring details
-  const explanationJson = explanation.toJson()
+  const explanationJson = explanation.toJSON()
   console.log('Score explanation:', explanationJson)
 
   // Assertions
@@ -353,7 +353,7 @@ if (result.hits.length > 0) {
 }
 ```
 
-The `toJson()` method returns a pretty-printed JSON string that shows the final score value, a breakdown of how the score was calculated, details about which query clauses matched, and the contribution of individual terms.
+The `toJSON()` method returns a pretty-printed JSON string that shows the final score value, a breakdown of how the score was calculated, details about which query clauses matched, and the contribution of individual terms.
 
 This is particularly useful when debugging why certain documents rank higher than others.
 

@@ -455,7 +455,7 @@ describe('TestClass', () => {
 
     // Test the explain() method
     const explanation = query.explain(searcher, docAddress)
-    const jsonOutput = explanation.toJson()
+    const jsonOutput = explanation.toJSON()
     expect(typeof jsonOutput).toBe('string')
     expect(jsonOutput.length).toBeGreaterThan(0)
     // The JSON should contain score information
@@ -1139,9 +1139,9 @@ it('test_schema_eq', () => {
     .addTextField('content') // Different field name
     .build()
 
-  expect(schema1.toJson()).toEqual(schema2.toJson())
-  expect(schema1.toJson()).not.toEqual(schema3.toJson())
-  expect(schema2.toJson()).not.toEqual(schema3.toJson())
+  expect(schema1.toJSON()).toEqual(schema2.toJSON())
+  expect(schema1.toJSON()).not.toEqual(schema3.toJSON())
+  expect(schema2.toJSON()).not.toEqual(schema3.toJSON())
 
   // Test field existence
   expect(schema1.hasField('title')).toBe(true)
@@ -1180,7 +1180,7 @@ it('test_schema_pickle', () => {
     .addBytesField('bytes')
     .build()
 
-  expect(originalSchema.toJson()).toBe(Schema.fromJson(originalSchema.toJson()).toJson())
+  expect(originalSchema.toJSON()).toBe(Schema.fromJson(originalSchema.toJSON()).toJSON())
 })
 
 it('test_facet_pickle', () => {

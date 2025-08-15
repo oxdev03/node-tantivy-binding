@@ -46,7 +46,7 @@ if (result.hits.length > 0) {
   const explanation = complexQuery.explain(searcher, hit.docAddress)
 
   // The explanation provides a JSON representation of the scoring details
-  const explanationJson = explanation.toJson()
+  const explanationJson = explanation.toJSON()
   console.log('Score explanation:', explanationJson)
 
   // Assertions

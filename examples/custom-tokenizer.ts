@@ -6,5 +6,5 @@ const schema = schemaBuilderTok.build()
 
 // Assertions
 // Test that the field was added with the correct tokenizer
-const schemaJson = schema.toJson()
+const schemaJson = JSON.stringify(schema)
 console.assert(schemaJson.includes('body'), 'Schema should contain body field')
