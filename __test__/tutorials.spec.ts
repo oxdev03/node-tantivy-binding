@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 import { syncFromSource } from './sync-examples'
@@ -6,6 +6,19 @@ import { syncFromSource } from './sync-examples'
 describe('Documentation Examples', () => {
   const examplesDir = path.join(__dirname, '../examples')
   const tutorialsPath = path.join(__dirname, '../docs/tutorials.md')
+
+  beforeEach(() => {
+    vi.spyOn(console, 'assert').mockImplementation((condition: any, ...args: any[]) => {
+      if (!condition) {
+        const message = args.length > 0 ? args.join(' ') : 'Assertion failed'
+        throw new Error(`Console assertion failed: ${message}`)
+      }
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   // Dynamically find all example files
   const exampleFiles = fs.readdirSync(examplesDir).filter((file) => file.endsWith('.ts') && !file.startsWith('_'))
