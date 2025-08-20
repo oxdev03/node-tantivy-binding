@@ -9,7 +9,7 @@ version     = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-base64 = "0.21"
+base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 napi = { version = "3.2", default-features = false, features = [
   "napi8",
@@ -18,7 +18,7 @@ napi = { version = "3.2", default-features = false, features = [
 napi-derive = "3.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-tantivy = "0.24.2"
+tantivy = "0.25.0"
 
 [build-dependencies]
 napi-build = "2.2"
