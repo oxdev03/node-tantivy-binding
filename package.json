@@ -1,18 +1,22 @@
 {
   "name": "@oxdev03/node-tantivy-binding",
   "version": "0.1.3",
-  "description": "Template project for writing node package with napi-rs",
+  "description": "Node.js bindings for Tantivy. Provides indexing, querying, and advanced search features with TypeScript support.",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": "https://github.com/oxdev03/node-tantivy-binding",
   "license": "MIT",
   "keywords": [
+    "nodejs",
+    "search",
+    "typescript",
+    "indexing",
+    "lucene",
+    "document-search",
+    "tantivy",
     "napi-rs",
-    "NAPI",
-    "N-API",
-    "Rust",
-    "node-addon",
-    "node-addon-api"
+    "full-text-search",
+    "rust"
   ],
   "files": [
     "index.d.ts",
