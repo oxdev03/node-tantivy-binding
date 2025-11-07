@@ -1406,7 +1406,7 @@ __metadata:
     chalk: "npm:^5.4.1"
     husky: "npm:^9.1.7"
     lint-staged: "npm:^16.1.2"
-    marked: "npm:^16.1.2"
+    marked: "npm:^17.0.0"
     npm-run-all2: "npm:^8.0.4"
     oxlint: "npm:^1.8.0"
     prettier: "npm:^3.6.2"
@@ -2596,12 +2596,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:^16.1.2":
-  version: 16.1.2
-  resolution: "marked@npm:16.1.2"
+"marked@npm:^17.0.0":
+  version: 17.0.0
+  resolution: "marked@npm:17.0.0"
   bin:
     marked: bin/marked.js
-  checksum: 10c0/4e5878f1aa89de139bed14835865af20f26527674f41dedf2b33d2f85360298a1a0cc0505c675f072175c86eb30684c7b4e287d18f5958daa26e36bc1308d321
+  checksum: 10c0/e7f02b59356e50d751f57e9715ca29c5da580459450ae2ba2e0cfb286dd972d57fdb7ad9945c742ceb91a0bf65d2ff9e2f2fdc4094ae2a8621173c9e4a00b4f8
   languageName: node
   linkType: hard
 
