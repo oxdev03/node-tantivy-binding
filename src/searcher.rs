@@ -1,5 +1,3 @@
-
-
 use crate::{document::Document, query::Query};
 use napi::bindgen_prelude::*;
 use napi::{Error, Result, Status};
@@ -21,8 +19,6 @@ use tantivy::Document as _;
 pub struct Searcher {
   pub(crate) inner: tv::Searcher,
 }
-
-
 
 #[napi]
 #[derive(Deserialize, PartialEq, Serialize)]

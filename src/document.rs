@@ -1,5 +1,3 @@
-
-
 use napi::{bindgen_prelude::*, Error, JsNumber, Result, Status, ValueType};
 use napi_derive::napi;
 

@@ -804,7 +804,10 @@ impl IpFormatError {
 
 impl QueryParserError for IpFormatError {
   fn full_message(&self) -> String {
-    format!("The IP address field is malformed: {0}", self.addr_parse_error)
+    format!(
+      "The IP address field is malformed: {0}",
+      self.addr_parse_error
+    )
   }
 }
 

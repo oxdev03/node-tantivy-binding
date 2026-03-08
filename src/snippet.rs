@@ -60,10 +60,12 @@ impl SnippetGenerator {
     schema: &crate::Schema,
     field_name: String,
   ) -> Result<SnippetGenerator> {
-    let field = schema
-      .inner
-      .get_field(&field_name)
-      .map_err(|_| Error::new(napi::Status::InvalidArg, format!("Field '{}' not found", field_name)))?;
+    let field = schema.inner.get_field(&field_name).map_err(|_| {
+      Error::new(
+        napi::Status::InvalidArg,
+        format!("Field '{}' not found", field_name),
+      )
+    })?;
     let generator = tv::snippet::SnippetGenerator::create(&searcher.inner, query.get(), field)
       .map_err(|e| Error::new(napi::Status::GenericFailure, e.to_string()))?;
 

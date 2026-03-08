@@ -364,16 +364,22 @@ impl TextAnalyzerBuilder {
           Err(e) => return Err(e),
         },
         FilterType::StopWord { language } => match parse_language(language) {
-          Ok(lang) => builder.filter_dynamic(tvt::StopWordFilter::new(lang)
-            .ok_or_else(|| Error::from_reason(format!("Failed to create stop word filter for language: {:?}", language)))?),
+          Ok(lang) => builder.filter_dynamic(tvt::StopWordFilter::new(lang).ok_or_else(|| {
+            Error::from_reason(format!(
+              "Failed to create stop word filter for language: {:?}",
+              language
+            ))
+          })?),
           Err(e) => return Err(e),
         },
         FilterType::CustomStopWord { stopwords } => {
           builder.filter_dynamic(tvt::StopWordFilter::remove(stopwords.clone()))
         }
-        FilterType::SplitCompound { constituent_words } => builder
-          .filter_dynamic(tvt::SplitCompoundWords::from_dictionary(constituent_words)
-            .map_err(|e| Error::from_reason(format!("Failed to create compound splitter: {}", e)))?),
+        FilterType::SplitCompound { constituent_words } => builder.filter_dynamic(
+          tvt::SplitCompoundWords::from_dictionary(constituent_words).map_err(|e| {
+            Error::from_reason(format!("Failed to create compound splitter: {}", e))
+          })?,
+        ),
       };
       Ok(TextAnalyzerBuilder {
         builder: Some(new_builder),

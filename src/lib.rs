@@ -103,7 +103,6 @@ pub(crate) fn make_term_for_type(
   }
 }
 
-
 pub mod document;
 pub mod explanation;
 pub mod facet;
