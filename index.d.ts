@@ -310,7 +310,9 @@ export declare class FieldNotIndexedError {
   toString(): string
 }
 
-export declare class Filter {}
+export declare class Filter {
+
+}
 
 export declare class FilterStatic {
   /** AlphaNumOnlyFilter */
@@ -453,12 +455,7 @@ export declare class Index {
    *         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
    *         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
    */
-  parseQuery(
-    query: string,
-    defaultFieldNames?: Array<string> | undefined | null,
-    fieldBoosts?: Record<string, number> | undefined | null,
-    fuzzyFields?: Record<string, [boolean, number, boolean]> | undefined | null,
-  ): Query
+  parseQuery(query: string, defaultFieldNames?: Array<string> | undefined | null, fieldBoosts?: Record<string, number> | undefined | null, fuzzyFields?: Record<string, [boolean, number, boolean]> | undefined | null): Query
   /**
    * Parse a query leniently.
    *
@@ -484,12 +481,7 @@ export declare class Index {
    *
    * Returns a tuple containing the parsed query and a list of error messages.
    */
-  parseQueryLenient(
-    query: string,
-    defaultFieldNames?: Array<string> | undefined | null,
-    fieldBoosts?: Record<string, number> | undefined | null,
-    fuzzyFields?: Record<string, [boolean, number, boolean]> | undefined | null,
-  ): [Query, Array<string>]
+  parseQueryLenient(query: string, defaultFieldNames?: Array<string> | undefined | null, fieldBoosts?: Record<string, number> | undefined | null, fuzzyFields?: Record<string, [boolean, number, boolean]> | undefined | null): [Query, Array<string>]
   /**
    * Register a custom text analyzer by name. (Confusingly,
    * this is one of the places where Tantivy uses 'tokenizer' to refer to a
@@ -547,7 +539,12 @@ export declare class IndexWriter {
    * was after the last commit.
    */
   rollback(): bigint
-  /** Detect and removes the files that are not used by the index anymore. */
+  /**
+   * Detect and removes the files that are not used by the index anymore.
+   *
+   * Note: This is currently a no-op. Tantivy's garbage collection requires
+   * an async runtime. A future version may implement this properly.
+   */
   garbageCollectFiles(): void
   /** Deletes all documents from the index. */
   deleteAllDocuments(): void
@@ -624,12 +621,7 @@ export declare class PhrasePrefixRequiresAtLeastTwoTermsError {
 export declare class Query {
   toString(): string
   /** Construct a Tantivy's TermQuery */
-  static termQuery(
-    schema: Schema,
-    fieldName: string,
-    fieldValue: unknown,
-    indexOption?: string | undefined | null,
-  ): Query
+  static termQuery(schema: Schema, fieldName: string, fieldValue: unknown, indexOption?: string | undefined | null): Query
   /** Construct a Tantivy's TermSetQuery */
   static termSetQuery(schema: Schema, fieldName: string, fieldValues: Array<unknown>): Query
   /** Construct a Tantivy's AllQuery */
@@ -646,14 +638,7 @@ export declare class Query {
    * * `transposition_cost_one` - (Optional) If true, a transposition (swapping) cost will be 1; otherwise it will be 2. When not specified, the default is true.
    * * `prefix` - (Optional) If true, prefix levenshtein distance is applied. When not specified, the default is false.
    */
-  static fuzzyTermQuery(
-    schema: Schema,
-    fieldName: string,
-    text: string,
-    distance?: number | undefined | null,
-    transpositionCostOne?: boolean | undefined | null,
-    prefix?: boolean | undefined | null,
-  ): Query
+  static fuzzyTermQuery(schema: Schema, fieldName: string, text: string, distance?: number | undefined | null, transpositionCostOne?: boolean | undefined | null, prefix?: boolean | undefined | null): Query
   /**
    * Construct a Tantivy's PhraseQuery with custom offsets and slop
    *
@@ -673,28 +658,10 @@ export declare class Query {
   static boostQuery(query: Query, boost: number): Query
   /** Construct a Tantivy's RegexQuery */
   static regexQuery(schema: Schema, fieldName: string, regexPattern: string): Query
-  static moreLikeThisQuery(
-    docAddress: DocAddress,
-    minDocFrequency?: number | undefined | null,
-    maxDocFrequency?: number | undefined | null,
-    minTermFrequency?: number | undefined | null,
-    maxQueryTerms?: number | undefined | null,
-    minWordLength?: number | undefined | null,
-    maxWordLength?: number | undefined | null,
-    boostFactor?: number | undefined | null,
-    stopWords?: Array<string> | undefined | null,
-  ): Query
+  static moreLikeThisQuery(docAddress: DocAddress, minDocFrequency?: number | undefined | null, maxDocFrequency?: number | undefined | null, minTermFrequency?: number | undefined | null, maxQueryTerms?: number | undefined | null, minWordLength?: number | undefined | null, maxWordLength?: number | undefined | null, boostFactor?: number | undefined | null, stopWords?: Array<string> | undefined | null): Query
   /** Construct a Tantivy's ConstScoreQuery */
   static constScoreQuery(query: Query, score: number): Query
-  static rangeQuery(
-    schema: Schema,
-    fieldName: string,
-    fieldType: FieldType,
-    lowerBound: unknown,
-    upperBound: unknown,
-    includeLower?: boolean | undefined | null,
-    includeUpper?: boolean | undefined | null,
-  ): Query
+  static rangeQuery(schema: Schema, fieldName: string, fieldType: FieldType, lowerBound: unknown, upperBound: unknown, includeLower?: boolean | undefined | null, includeUpper?: boolean | undefined | null): Query
   /**
    * Explain how this query matches a given document.
    *
@@ -882,14 +849,7 @@ export declare class Searcher {
    *
    * @throws ValueError if there was an error with the search.
    */
-  search(
-    query: Query,
-    limit?: number | undefined | null,
-    count?: boolean | undefined | null,
-    orderByField?: string | undefined | null,
-    offset?: number | undefined | null,
-    order?: Order | undefined | null,
-  ): SearchResult
+  search(query: Query, limit?: number | undefined | null, count?: boolean | undefined | null, orderByField?: string | undefined | null, offset?: number | undefined | null, order?: Order | undefined | null): SearchResult
   aggregate(query: Query, agg: unknown): string
   /** Returns the overall number of documents in the index. */
   get numDocs(): number
@@ -986,7 +946,9 @@ export declare class TextAnalyzerBuilder {
   build(): TextAnalyzer
 }
 
-export declare class Tokenizer {}
+export declare class Tokenizer {
+
+}
 
 export declare class TokenizerStatic {
   /** SimpleTokenizer */
@@ -1006,11 +968,7 @@ export declare class TokenizerStatic {
    * @param maxGram - Maximum character length of each ngram.
    * @param prefixOnly - If true, ngrams must count from the start of the word.
    */
-  static ngram(
-    minGram?: number | undefined | null,
-    maxGram?: number | undefined | null,
-    prefixOnly?: boolean | undefined | null,
-  ): Tokenizer
+  static ngram(minGram?: number | undefined | null, maxGram?: number | undefined | null, prefixOnly?: boolean | undefined | null): Tokenizer
 }
 
 /** The tokenizer for the given field is unknown. */
@@ -1060,7 +1018,7 @@ export declare const enum FieldType {
   Facet = 6,
   Bytes = 7,
   JsonObject = 8,
-  IpAddr = 9,
+  IpAddr = 9
 }
 
 /** Get the version of the library */
@@ -1090,7 +1048,7 @@ export interface NumericFieldOptions {
 export declare const enum Occur {
   Must = 0,
   Should = 1,
-  MustNot = 2,
+  MustNot = 2
 }
 
 /** Enum representing the direction in which something should be sorted. */
@@ -1098,7 +1056,7 @@ export declare const enum Order {
   /** Ascending. Smaller values appear first. */
   Asc = 0,
   /** Descending. Larger values appear first. */
-  Desc = 1,
+  Desc = 1
 }
 
 export interface Range {

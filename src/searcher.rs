@@ -1,4 +1,4 @@
-#![allow(clippy::new_ret_no_self)]
+
 
 use crate::{document::Document, query::Query};
 use napi::bindgen_prelude::*;
@@ -22,20 +22,7 @@ pub struct Searcher {
   pub(crate) inner: tv::Searcher,
 }
 
-#[derive(Clone, Deserialize, PartialEq, Serialize)]
-enum Fruit {
-  Score(f32),
-  Order(u64),
-}
 
-impl std::fmt::Debug for Fruit {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Fruit::Score(s) => f.write_str(&format!("{s}")),
-      Fruit::Order(o) => f.write_str(&format!("{o}")),
-    }
-  }
-}
 
 #[napi]
 #[derive(Deserialize, PartialEq, Serialize)]

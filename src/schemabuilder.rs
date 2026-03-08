@@ -70,6 +70,12 @@ pub struct IpAddrFieldOptions {
   pub fast: Option<bool>,
 }
 
+impl Default for SchemaBuilder {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 #[napi]
 impl SchemaBuilder {
   /// Create a new SchemaBuilder.

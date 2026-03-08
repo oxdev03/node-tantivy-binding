@@ -1,4 +1,4 @@
-#![allow(clippy::new_ret_no_self)]
+
 
 use std::collections::HashMap;
 
@@ -113,10 +113,12 @@ impl IndexWriter {
   }
 
   /// Detect and removes the files that are not used by the index anymore.
+  ///
+  /// Note: This is currently a no-op. Tantivy's garbage collection requires
+  /// an async runtime. A future version may implement this properly.
   #[napi]
   pub fn garbage_collect_files(&mut self) -> Result<()> {
-    // Note: In the original version this was async, but for simplicity we skip it
-    // The user can manually manage files if needed
+    // TODO: Implement using futures::executor::block_on(writer.garbage_collect_files())
     Ok(())
   }
 

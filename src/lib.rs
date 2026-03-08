@@ -6,7 +6,7 @@ use tantivy as tv;
 /// Get the version of the library
 #[napi]
 pub fn get_version() -> String {
-  "0.1.0".to_string()
+  env!("CARGO_PKG_VERSION").to_string()
 }
 
 // Helper functions for query operations
@@ -36,60 +36,7 @@ pub(crate) fn make_term(
   let field_type =
     crate::schema::FieldType::from_tantivy_type(&field_entry.field_type().value_type());
 
-  match field_type {
-    crate::schema::FieldType::Str => {
-      let str_val = field_value.coerce_to_string()?.into_utf8()?.into_owned()?;
-      Ok(tv::Term::from_field_text(field, &str_val))
-    }
-    crate::schema::FieldType::U64 => {
-      let num_val = field_value.coerce_to_number()?.get_uint32()? as u64;
-      Ok(tv::Term::from_field_u64(field, num_val))
-    }
-    crate::schema::FieldType::I64 => {
-      let num_val = field_value.coerce_to_number()?.get_int64()?;
-      Ok(tv::Term::from_field_i64(field, num_val))
-    }
-    crate::schema::FieldType::F64 => {
-      let num_val = field_value.coerce_to_number()?.get_double()?;
-      Ok(tv::Term::from_field_f64(field, num_val))
-    }
-    crate::schema::FieldType::Date => {
-      let num_val = field_value.coerce_to_number()?.get_int64()?;
-      Ok(tv::Term::from_field_date(
-        field,
-        tv::DateTime::from_timestamp_secs(num_val),
-      ))
-    }
-    crate::schema::FieldType::Facet => {
-      let str_val = field_value.coerce_to_string()?.into_utf8()?.into_owned()?;
-      let facet = tv::schema::Facet::from(&str_val);
-      Ok(tv::Term::from_facet(field, &facet))
-    }
-    crate::schema::FieldType::Bytes => {
-      let str_val = field_value.coerce_to_string()?.into_utf8()?.into_owned()?;
-      Ok(tv::Term::from_field_bytes(field, str_val.as_bytes()))
-    }
-    crate::schema::FieldType::Bool => {
-      let bool_val = field_value.coerce_to_bool()?;
-      Ok(tv::Term::from_field_bool(field, bool_val))
-    }
-    crate::schema::FieldType::IpAddr => {
-      let str_val = field_value.coerce_to_string()?.into_utf8()?.into_owned()?;
-      let ip_addr: std::net::IpAddr = str_val
-        .parse()
-        .map_err(|e| Error::new(Status::InvalidArg, format!("Invalid IP address: {}", e)))?;
-      // Convert IpAddr to Ipv6Addr for Tantivy
-      let ipv6_addr = match ip_addr {
-        std::net::IpAddr::V6(v6) => v6,
-        std::net::IpAddr::V4(v4) => v4.to_ipv6_mapped(),
-      };
-      Ok(tv::Term::from_field_ip_addr(field, ipv6_addr))
-    }
-    crate::schema::FieldType::JsonObject => {
-      let str_val = field_value.coerce_to_string()?.into_utf8()?.into_owned()?;
-      Ok(tv::Term::from_field_json_path(field, &str_val, false))
-    }
-  }
+  make_term_for_type(schema, field_name, field_type, field_value)
 }
 
 pub(crate) fn make_term_for_type(
@@ -156,7 +103,7 @@ pub(crate) fn make_term_for_type(
   }
 }
 
-// Start with just the schema builder and schema
+
 pub mod document;
 pub mod explanation;
 pub mod facet;

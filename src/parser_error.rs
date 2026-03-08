@@ -28,6 +28,7 @@ impl SyntaxError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -71,6 +72,7 @@ impl UnsupportedQueryError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -115,6 +117,7 @@ impl FieldDoesNotExistError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -177,6 +180,7 @@ impl ExpectedIntError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -257,6 +261,7 @@ impl ExpectedBase64Error {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -298,6 +303,7 @@ pub struct ExpectedFloatError {
 #[napi]
 impl ExpectedFloatError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -338,6 +344,7 @@ pub struct ExpectedBoolError {
 #[napi]
 impl ExpectedBoolError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -374,6 +381,7 @@ pub struct AllButQueryForbiddenError;
 #[napi]
 impl AllButQueryForbiddenError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -410,6 +418,7 @@ pub struct NoDefaultFieldDeclaredError;
 #[napi]
 impl NoDefaultFieldDeclaredError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -453,6 +462,7 @@ impl FieldNotIndexedError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -496,6 +506,7 @@ impl FieldDoesNotHavePositionsIndexedError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -552,6 +563,7 @@ impl PhrasePrefixRequiresAtLeastTwoTermsError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -613,6 +625,7 @@ impl UnknownTokenizerError {
   }
 
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -658,6 +671,7 @@ pub struct RangeMustNotHavePhraseError;
 #[napi]
 impl RangeMustNotHavePhraseError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -697,6 +711,7 @@ pub struct DateFormatError {
 #[napi]
 impl DateFormatError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -739,6 +754,7 @@ pub struct FacetFormatError {
 #[napi]
 impl FacetFormatError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -780,6 +796,7 @@ pub struct IpFormatError {
 #[napi]
 impl IpFormatError {
   #[napi(js_name = "toString")]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.full_message()
   }
@@ -787,7 +804,7 @@ impl IpFormatError {
 
 impl QueryParserError for IpFormatError {
   fn full_message(&self) -> String {
-    format!("The facet field is malformed: {0}", self.addr_parse_error)
+    format!("The IP address field is malformed: {0}", self.addr_parse_error)
   }
 }
 

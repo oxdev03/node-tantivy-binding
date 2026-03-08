@@ -1,5 +1,4 @@
-#![allow(clippy::new_ret_no_self)]
-#![allow(clippy::wrong_self_convention)]
+
 
 use napi::{bindgen_prelude::*, Error, JsNumber, Result, Status, ValueType};
 use napi_derive::napi;
@@ -7,7 +6,7 @@ use napi_derive::napi;
 use tantivy::{self as tv, schema::document::OwnedValue as Value};
 
 use crate::{facet::Facet, schema::Schema, to_napi_error};
-use chrono;
+
 use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
   collections::BTreeMap,
@@ -339,7 +338,7 @@ fn extract_value_single_or_list_for_type(
   )?])
 }
 
-fn value_to_js(env: Env, value: &Value) -> Result<Unknown> {
+fn value_to_js(env: Env, value: &Value) -> Result<Unknown<'_>> {
   Ok(match value {
     Value::Str(text) => env.to_js_value(&text.as_str())?,
     Value::U64(num) => env.to_js_value(&(*num as f64))?,
@@ -353,7 +352,7 @@ fn value_to_js(env: Env, value: &Value) -> Result<Unknown> {
     }
     Value::Facet(f) => env.to_js_value(&f.to_string())?,
     Value::Array(arr) => {
-      let vec: Vec<serde_json::Value> = arr.iter().map(|v| value_to_serde_json(v)).collect();
+      let vec: Vec<serde_json::Value> = arr.iter().map(value_to_serde_json).collect();
       env.to_js_value(&vec)?
     }
     Value::Object(obj) => {
@@ -413,7 +412,7 @@ fn value_to_serde_json(value: &Value) -> serde_json::Value {
       serde_json::Value::Object(map)
     }
     Value::Array(arr) => {
-      let vec: Vec<serde_json::Value> = arr.iter().map(|v| value_to_serde_json(v)).collect();
+      let vec: Vec<serde_json::Value> = arr.iter().map(value_to_serde_json).collect();
       serde_json::Value::Array(vec)
     }
     _ => serde_json::Value::Null,
@@ -438,7 +437,9 @@ fn value_to_string(value: &Value) -> String {
       let inner: Vec<_> = arr.iter().map(value_to_string).collect();
       format!("{inner:?}")
     }
-    Value::Object(json_object) => serde_json::to_string(&json_object).unwrap(),
+    Value::Object(json_object) => {
+      serde_json::to_string(&json_object).unwrap_or_else(|_| "<invalid object>".to_string())
+    }
     Value::Bool(b) => format!("{b}"),
     Value::IpAddr(i) => format!("{}", *i),
   }
@@ -764,7 +765,7 @@ impl Document {
   ///
   /// For this reason, the object will associate a list of values for every field.
   #[napi]
-  pub fn to_dict(&self, env: Env) -> Result<Object> {
+  pub fn to_dict(&self, env: Env) -> Result<Object<'_>> {
     let mut obj = Object::new(&env)?;
     for (key, values) in &self.field_values {
       let mut js_values = env.create_array(values.len() as u32)?;
@@ -902,7 +903,7 @@ impl Document {
   /// @returns The value if one is found, otherwise undefined.
   /// The type of the value depends on the field.
   #[napi]
-  pub fn get_first(&self, env: Env, field_name: String) -> Result<Unknown> {
+  pub fn get_first(&self, env: Env, field_name: String) -> Result<Unknown<'_>> {
     if let Some(value) = self.iter_values_for_field(&field_name).next() {
       value_to_js(env, value)
     } else {
@@ -917,16 +918,17 @@ impl Document {
   /// @returns An array of values.
   /// The type of the value depends on the field.
   #[napi]
-  pub fn get_all(&self, env: Env, field_name: String) -> Result<Unknown> {
+  pub fn get_all(&self, env: Env, field_name: String) -> Result<Unknown<'_>> {
     let values: Vec<serde_json::Value> = self
       .iter_values_for_field(&field_name)
-      .map(|value| value_to_serde_json(value))
+      .map(value_to_serde_json)
       .collect();
     env.to_js_value(&values)
   }
 
   /// Convert the document to a string representation
   #[napi]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     format!("{self:?}")
   }

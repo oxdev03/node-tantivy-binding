@@ -103,12 +103,14 @@ impl Facet {
   ///
   /// @returns The facet path as a string
   #[napi]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.inner.to_string()
   }
 }
 
 impl Facet {
+  #[allow(dead_code)]
   pub(crate) fn new(facet: TantivyFacet) -> Self {
     Self { inner: facet }
   }

@@ -63,10 +63,9 @@ impl SnippetGenerator {
     let field = schema
       .inner
       .get_field(&field_name)
-      .or(Err("field not found"))
-      .map_err(|e| Error::from_reason(e))?;
+      .map_err(|_| Error::new(napi::Status::InvalidArg, format!("Field '{}' not found", field_name)))?;
     let generator = tv::snippet::SnippetGenerator::create(&searcher.inner, query.get(), field)
-      .map_err(|e| Error::from_reason(e.to_string()))?;
+      .map_err(|e| Error::new(napi::Status::GenericFailure, e.to_string()))?;
 
     Ok(SnippetGenerator {
       field_name,

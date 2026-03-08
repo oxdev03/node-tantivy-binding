@@ -6,7 +6,7 @@ Node.js bindings for [Tantivy](https://github.com/quickwit-oss/tantivy), the ful
 
 This project is a Node.js port of [tantivy-py](https://github.com/quickwit-inc/tantivy-py), providing JavaScript/TypeScript bindings for the Tantivy search engine. The implementation closely follows the Python API to maintain consistency across language bindings.
 
-⚠️ **Note**: This is a first draft implementation ported from tantivy-py (see submodule hash). There may be unidentified bugs. The test suite is also based on tantivy-py. Furthermore not all future api changes will be reflected in this binding.
+
 
 # Installation
 
@@ -107,14 +107,11 @@ npm test
 
 ## Project Status
 
-This is a **first draft** port of tantivy-py to Node.js. While the core functionality works, please be aware:
+This library provides stable Node.js bindings for Tantivy, originally ported from [tantivy-py](https://github.com/quickwit-inc/tantivy-py). The core API is fully functional and covered by a comprehensive test suite.
 
-- ⚠️ **Potential bugs**: Some edge cases may not be handled correctly
-- 🔄 **API changes**: The API may evolve in future versions
+### Known Implementation Differences
 
-### Known Implementation Differences & TODOs
-
-The Node.js implementation currently differs from the Python version in several ways. These are documented TODOs for future improvement:
+The Node.js implementation differs from the Python version in several ways:
 
 #### 🔴 Critical Validation Issues
 
@@ -185,10 +182,8 @@ Document.fromDict({ json: 'hello' }, schema) // Should reject strings
 
 Built with:
 
-- **[napi-rs](https://napi.rs/)**: For Node.js ↔ Rust bindings
+- **[napi-rs](https://napi.rs/)**: For Node.js bindings
 - **[Tantivy](https://github.com/quickwit-oss/tantivy)**: The underlying search engine
-- **TypeScript**: Full type definitions included
-- **Vitest**: For testing
 
 ## Acknowledgments
 

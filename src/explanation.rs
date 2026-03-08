@@ -26,6 +26,7 @@ impl Explanation {
 
   /// Returns a string representation of the explanation.
   #[napi]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     format!("Explanation(value={})", self.inner.value())
   }

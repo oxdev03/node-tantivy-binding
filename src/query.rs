@@ -49,6 +49,7 @@ impl Query {
 #[napi]
 impl Query {
   #[napi]
+  #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     format!("Query({:?})", self.get())
   }
@@ -129,8 +130,6 @@ impl Query {
     let transposition_cost_one = transposition_cost_one.unwrap_or(true);
     let prefix = prefix.unwrap_or(false);
 
-    // For now, create the term directly without JsUnknown conversion
-    // This is a simplification - in practice you'd want a different approach
     let field = crate::get_field(&schema.inner, &field_name)?;
     let term = tv::Term::from_field_text(field, &text);
     let inner = if prefix {
@@ -260,6 +259,7 @@ impl Query {
   }
 
   #[napi(factory)]
+  #[allow(clippy::too_many_arguments)]
   pub fn more_like_this_query(
     doc_address: DocAddress,
     min_doc_frequency: Option<f64>,
