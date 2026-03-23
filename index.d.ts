@@ -626,6 +626,17 @@ export declare class Query {
   static termSetQuery(schema: Schema, fieldName: string, fieldValues: Array<unknown>): Query
   /** Construct a Tantivy's AllQuery */
   static allQuery(): Query
+  /** Construct a Tantivy's EmptyQuery — matches no documents. Useful as a placeholder. */
+  static emptyQuery(): Query
+  /**
+   * Construct a Tantivy's ExistsQuery
+   *
+   * Matches all documents that have at least one non-null value in the given field.
+   *
+   * @param schema - Schema of the target index.
+   * @param fieldName - Field name to check for existence.
+   */
+  static existsQuery(schema: Schema, fieldName: string): Query
   /**
    * Construct a Tantivy's FuzzyTermQuery
    *
@@ -662,6 +673,31 @@ export declare class Query {
   /** Construct a Tantivy's ConstScoreQuery */
   static constScoreQuery(query: Query, score: number): Query
   static rangeQuery(schema: Schema, fieldName: string, fieldType: FieldType, lowerBound: unknown, upperBound: unknown, includeLower?: boolean | undefined | null, includeUpper?: boolean | undefined | null): Query
+  /**
+   * Construct a Tantivy's PhrasePrefixQuery
+   *
+   * Matches a specific sequence of words followed by a term of which only a prefix is known.
+   * Requires positions to be indexed on the target field. At least two terms are required.
+   *
+   * @param schema - Schema of the target index.
+   * @param fieldName - Field name to be searched.
+   * @param words - Word list that constructs the phrase. The last word is treated as a prefix.
+   * @param maxExpansions - (Optional) Maximum number of terms the prefix can expand to. Default is 50.
+   */
+  static phrasePrefixQuery(schema: Schema, fieldName: string, words: Array<string>, maxExpansions?: number | undefined | null): Query
+  /**
+   * Construct a Tantivy's RegexPhraseQuery
+   *
+   * Matches a specific sequence of regex patterns in positional order, with optional slop.
+   * Each pattern can match multiple indexed terms via regex expansion.
+   *
+   * @param schema - Schema of the target index.
+   * @param fieldName - Field name to be searched.
+   * @param patterns - List of regex patterns forming the phrase.
+   * @param slop - (Optional) Number of gaps permitted between matched terms. Default is 0.
+   * @param maxExpansions - (Optional) Maximum number of terms each regex can expand to.
+   */
+  static regexPhraseQuery(schema: Schema, fieldName: string, patterns: Array<string>, slop?: number | undefined | null, maxExpansions?: number | undefined | null): Query
   /**
    * Explain how this query matches a given document.
    *
