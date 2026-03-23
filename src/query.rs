@@ -496,10 +496,7 @@ impl Query {
       ));
     }
     let field = get_field(&schema.inner, &field_name)?;
-    let terms_with_offset: Vec<(usize, String)> = patterns
-      .into_iter()
-      .enumerate()
-      .collect();
+    let terms_with_offset: Vec<(usize, String)> = patterns.into_iter().enumerate().collect();
     let mut inner = tv::query::RegexPhraseQuery::new_with_offset(field, terms_with_offset);
     if let Some(s) = slop {
       inner.set_slop(s);
