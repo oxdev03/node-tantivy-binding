@@ -107,6 +107,36 @@ impl Query {
     })
   }
 
+  /// Construct a Tantivy's EmptyQuery
+  ///
+  /// A query that matches no documents. Useful as a placeholder or default.
+  #[napi(factory)]
+  pub fn empty_query() -> Result<Query> {
+    let inner = tv::query::EmptyQuery {};
+    Ok(Query {
+      inner: Box::new(inner),
+    })
+  }
+
+  /// Construct a Tantivy's ExistsQuery
+  ///
+  /// Matches all documents that have at least one non-null value in the given field.
+  /// Useful for filtering documents that have a specific field populated.
+  ///
+  /// # Arguments
+  ///
+  /// * `schema` - Schema of the target index.
+  /// * `field_name` - Field name to check for existence.
+  #[napi(factory)]
+  pub fn exists_query(schema: &Schema, field_name: String) -> Result<Query> {
+    // Validate the field exists in the schema
+    let _field = get_field(&schema.inner, &field_name)?;
+    let inner = tv::query::ExistsQuery::new(field_name, false);
+    Ok(Query {
+      inner: Box::new(inner),
+    })
+  }
+
   /// Construct a Tantivy's FuzzyTermQuery
   ///
   /// # Arguments
@@ -395,6 +425,85 @@ impl Query {
 
     let inner = tv::query::RangeQuery::new(lower_bound, upper_bound);
 
+    Ok(Query {
+      inner: Box::new(inner),
+    })
+  }
+
+  /// Construct a Tantivy's PhrasePrefixQuery
+  ///
+  /// Matches a specific sequence of words followed by a term of which only a prefix is known.
+  /// Requires positions to be indexed on the target field. At least two terms are required.
+  ///
+  /// # Arguments
+  ///
+  /// * `schema` - Schema of the target index.
+  /// * `field_name` - Field name to be searched.
+  /// * `words` - Word list that constructs the phrase. The last word is treated as a prefix.
+  /// * `max_expansions` - (Optional) Maximum number of terms the prefix can expand to. Default is 50.
+  #[napi(factory)]
+  pub fn phrase_prefix_query(
+    schema: &Schema,
+    field_name: String,
+    words: Vec<String>,
+    max_expansions: Option<u32>,
+  ) -> Result<Query> {
+    if words.len() < 2 {
+      return Err(Error::new(
+        Status::InvalidArg,
+        "PhrasePrefixQuery requires at least two terms.".to_string(),
+      ));
+    }
+    let field = get_field(&schema.inner, &field_name)?;
+    let terms: Vec<tv::Term> = words
+      .iter()
+      .map(|w| tv::Term::from_field_text(field, w))
+      .collect();
+    let mut inner = tv::query::PhrasePrefixQuery::new(terms);
+    if let Some(max_exp) = max_expansions {
+      inner.set_max_expansions(max_exp);
+    }
+    Ok(Query {
+      inner: Box::new(inner),
+    })
+  }
+
+  /// Construct a Tantivy's RegexPhraseQuery
+  ///
+  /// Matches a specific sequence of regex patterns in positional order, with optional slop.
+  /// Each pattern can match multiple indexed terms via regex expansion.
+  ///
+  /// # Arguments
+  ///
+  /// * `schema` - Schema of the target index.
+  /// * `field_name` - Field name to be searched.
+  /// * `patterns` - List of regex patterns forming the phrase. Each pattern can be a string
+  ///   (offset = index) or a [offset, pattern] pair for custom positioning.
+  /// * `slop` - (Optional) Number of gaps permitted between matched terms. Default is 0.
+  /// * `max_expansions` - (Optional) Maximum number of terms each regex can expand to.
+  #[napi(factory)]
+  pub fn regex_phrase_query(
+    schema: &Schema,
+    field_name: String,
+    patterns: Vec<String>,
+    slop: Option<u32>,
+    max_expansions: Option<u32>,
+  ) -> Result<Query> {
+    if patterns.is_empty() {
+      return Err(Error::new(
+        Status::InvalidArg,
+        "patterns must not be empty.".to_string(),
+      ));
+    }
+    let field = get_field(&schema.inner, &field_name)?;
+    let terms_with_offset: Vec<(usize, String)> = patterns.into_iter().enumerate().collect();
+    let mut inner = tv::query::RegexPhraseQuery::new_with_offset(field, terms_with_offset);
+    if let Some(s) = slop {
+      inner.set_slop(s);
+    }
+    if let Some(max_exp) = max_expansions {
+      inner.set_max_expansions(max_exp);
+    }
     Ok(Query {
       inner: Box::new(inner),
     })

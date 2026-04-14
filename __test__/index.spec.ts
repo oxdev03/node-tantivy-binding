@@ -1479,6 +1479,40 @@ describe('TestQuery', () => {
     expect(result.hits.length).toBeGreaterThanOrEqual(0)
   })
 
+  it('test_phrase_prefix_query', () => {
+    // "old m" should match "old man" in "The Old Man and the Sea" body
+    const query = Query.phrasePrefixQuery(ramIndex.schema, 'body', ['old', 'm'])
+    const searcher = ramIndex.searcher()
+    const result = searcher.search(query)
+    expect(result.hits.length).toBe(1)
+    const { docAddress } = result.hits[0]
+    const searchedDoc = searcher.doc(docAddress)
+    expect((searchedDoc.toDict() as TestDoc).title).toEqual(['The Old Man and the Sea'])
+  })
+
+  it('test_phrase_prefix_query_requires_two_terms', () => {
+    expect(() => {
+      Query.phrasePrefixQuery(ramIndex.schema, 'body', ['old'])
+    }).toThrow('PhrasePrefixQuery requires at least two terms')
+  })
+
+  it('test_regex_phrase_query', () => {
+    // Match "old" followed by "man" using regex patterns with slop
+    const query = Query.regexPhraseQuery(ramIndex.schema, 'body', ['old', 'ma.*'], 1)
+    const searcher = ramIndex.searcher()
+    const result = searcher.search(query)
+    expect(result.hits.length).toBe(1)
+    const { docAddress } = result.hits[0]
+    const searchedDoc = searcher.doc(docAddress)
+    expect((searchedDoc.toDict() as TestDoc).title).toEqual(['The Old Man and the Sea'])
+  })
+
+  it('test_regex_phrase_query_empty_patterns', () => {
+    expect(() => {
+      Query.regexPhraseQuery(ramIndex.schema, 'body', [])
+    }).toThrow('patterns must not be empty')
+  })
+
   it('test_index_exists', () => {
     // Test basic index functionality
     expect(ramIndex).toBeDefined()
