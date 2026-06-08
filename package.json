@@ -4,7 +4,6 @@
   "description": "Node.js bindings for Tantivy. Provides indexing, querying, and advanced search features with TypeScript support.",
   "main": "index.js",
   "types": "index.d.ts",
-  "browser": "browser.js",
   "repository": "https://github.com/oxdev03/node-tantivy-binding",
   "license": "MIT",
   "keywords": [
@@ -21,8 +20,7 @@
   ],
   "files": [
     "index.d.ts",
-    "index.js",
-    "browser.js"
+    "index.js"
   ],
   "napi": {
     "binaryName": "node-tantivy-binding",
@@ -39,8 +37,7 @@
       "x86_64-unknown-freebsd",
       "aarch64-unknown-linux-musl",
       "aarch64-pc-windows-msvc",
-      "armv7-linux-androideabi",
-      "wasm32-wasi-preview1-threads"
+      "armv7-linux-androideabi"
     ]
   },
   "engines": {

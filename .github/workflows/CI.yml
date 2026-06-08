@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: ESLint
+      - name: Oxlint
         run: pnpm lint
 
       - name: Cargo fmt
@@ -95,9 +95,6 @@ jobs:
           - host: windows-latest
             target: aarch64-pc-windows-msvc
             build: pnpm build --target aarch64-pc-windows-msvc
-          - host: ubuntu-latest
-            target: wasm32-wasip1-threads
-            build: pnpm build --target wasm32-wasip1-threads
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -330,6 +327,7 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
+    if: false # WASI target removed from build matrix
     steps:
       - uses: actions/checkout@v6
       - name: setup pnpm
