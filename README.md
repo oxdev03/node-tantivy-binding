@@ -78,23 +78,23 @@ The API closely follows [tantivy-py](https://github.com/quickwit-inc/tantivy-py)
 
 - Install the latest `Rust` (required for building from source)
 - Install `Node.js@22+` which fully supports `Node-API`
-- Install `yarn`
+- Install `pnpm`
 
 ## Building from Source
 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd node-tantivy-binding-binding
+cd node-tantivy-binding
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build the native module
-npm run build
+pnpm build
 
 # Run tests
-npm test
+pnpm test
 ```
 
 ## Testing
@@ -102,7 +102,7 @@ npm test
 The project includes a comprehensive test suite migrated from tantivy-py:
 
 ```bash
-npm test
+pnpm test
 ```
 
 ## Project Status
