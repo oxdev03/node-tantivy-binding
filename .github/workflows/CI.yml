@@ -369,6 +369,9 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
+      - name: Update npm
+        # npm trusted publishing (OIDC) requires npm >= 11.5.1; Node 22 ships an older npm.
+        run: npm install -g npm@latest
       - name: Install dependencies
         run: pnpm install
       - name: Download all artifacts
@@ -396,4 +399,3 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
