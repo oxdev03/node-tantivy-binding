@@ -218,7 +218,7 @@ impl Query {
       let occur_value: Unknown = subquery_obj
         .get("occur")?
         .ok_or_else(|| Error::new(Status::InvalidArg, "Missing 'occur' field in subquery"))?;
-      let query_value: &Query = subquery_obj
+      let query_value: ClassInstance<Query> = subquery_obj
         .get("query")?
         .ok_or_else(|| Error::new(Status::InvalidArg, "Missing 'query' field in subquery"))?;
 
