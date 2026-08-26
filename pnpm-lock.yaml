@@ -45,8 +45,8 @@ importers:
         specifier: ^17.0.0
         version: 17.0.7
       marked:
-        specifier: ^17.0.0
-        version: 17.0.6
+        specifier: ^18.0.0
+        version: 18.0.11
       npm-run-all2:
         specifier: ^9.0.0
         version: 9.0.1
@@ -1252,8 +1252,8 @@ packages:
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
-  marked@17.0.6:
-    resolution: {integrity: sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA==}
+  marked@18.0.11:
+    resolution: {integrity: sha512-HnslJfsZkRPBDJRHvVtAaWlZHEpSu7u8LgQuJCELjRKuWR+hpq4A7sLq3p8HaI9ypVoXDXxV34CsQJEe1+J5Aw==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -2490,7 +2490,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  marked@17.0.6: {}
+  marked@18.0.11: {}
 
   memorystream@0.3.1: {}
 
