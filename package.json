@@ -47,7 +47,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@11.25.0",
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
