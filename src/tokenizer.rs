@@ -192,10 +192,12 @@ impl FilterStatic {
   ///
   /// @param language - Stop words list language.
   ///   Valid values: {
-  ///     "arabic", "danish", "dutch", "english", "finnish", "french", "german", "greek",
-  ///     "hungarian", "italian", "norwegian", "portuguese", "romanian", "russian",
-  ///     "spanish", "swedish", "tamil", "turkish"
+  ///     "danish", "dutch", "english", "finnish", "french", "german", "hungarian",
+  ///     "italian", "norwegian", "portuguese", "russian", "spanish", "swedish"
   ///   }
+  ///
+  /// Adding this filter to a builder throws for any other language, including
+  /// stemmer languages without a builtin stop word list.
   #[napi]
   pub fn stopword(language: String) -> Filter {
     Filter {
@@ -363,15 +365,17 @@ impl TextAnalyzerBuilder {
           Ok(lang) => builder.filter_dynamic(tvt::Stemmer::new(lang)),
           Err(e) => return Err(e),
         },
-        FilterType::StopWord { language } => match parse_language(language) {
-          Ok(lang) => builder.filter_dynamic(tvt::StopWordFilter::new(lang).ok_or_else(|| {
+        FilterType::StopWord { language } => {
+          let lang = parse_language(language)?;
+          // Not every stemmer language has a builtin stop word list
+          let stop_words = tvt::StopWordFilter::new(lang).ok_or_else(|| {
             Error::from_reason(format!(
-              "Failed to create stop word filter for language: {:?}",
+              "No builtin stop word list for language: {}",
               language
             ))
-          })?),
-          Err(e) => return Err(e),
-        },
+          })?;
+          builder.filter_dynamic(stop_words)
+        }
         FilterType::CustomStopWord { stopwords } => {
           builder.filter_dynamic(tvt::StopWordFilter::remove(stopwords.clone()))
         }

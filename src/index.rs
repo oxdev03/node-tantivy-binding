@@ -63,10 +63,9 @@ impl IndexWriter {
   /// since the creation of the index.
   #[napi]
   pub fn add_document(&mut self, doc: &Document) -> Result<u64> {
-    let named_doc = tantivy::schema::NamedFieldDocument(doc.field_values.clone());
+    let named_doc = tv::schema::NamedFieldDocument(doc.field_values.clone());
     let doc =
-      tantivy::schema::document::TantivyDocument::convert_named_doc(&self.schema, named_doc)
-        .map_err(to_napi_error)?;
+      tv::TantivyDocument::convert_named_doc(&self.schema, named_doc).map_err(to_napi_error)?;
     self.inner()?.add_document(doc).map_err(to_napi_error)
   }
 
@@ -80,8 +79,7 @@ impl IndexWriter {
   /// since the creation of the index.
   #[napi]
   pub fn add_json(&mut self, json: String) -> Result<u64> {
-    let doc = tantivy::schema::document::TantivyDocument::parse_json(&self.schema, &json)
-      .map_err(to_napi_error)?;
+    let doc = tv::TantivyDocument::parse_json(&self.schema, &json).map_err(to_napi_error)?;
     let opstamp = self.inner()?.add_document(doc);
     opstamp.map_err(to_napi_error)
   }
@@ -111,12 +109,9 @@ impl IndexWriter {
   }
 
   /// Detect and removes the files that are not used by the index anymore.
-  ///
-  /// Note: This is currently a no-op. Tantivy's garbage collection requires
-  /// an async runtime. A future version may implement this properly.
   #[napi]
   pub fn garbage_collect_files(&mut self) -> Result<()> {
-    // TODO: Implement using futures::executor::block_on(writer.garbage_collect_files())
+    futures::executor::block_on(self.inner()?.garbage_collect_files()).map_err(to_napi_error)?;
     Ok(())
   }
 
@@ -140,6 +135,20 @@ impl IndexWriter {
   #[napi(getter)]
   pub fn commit_opstamp(&self) -> Result<u64> {
     Ok(self.inner()?.commit_opstamp())
+  }
+
+  /// @deprecated Use `deleteDocumentsByTerm` or `deleteDocumentsByQuery` instead.
+  ///
+  /// Kept as an alias of `deleteDocumentsByTerm` for parity with tantivy-py.
+  /// The Rust `#[deprecated]` attribute is deliberately not used here: it fires
+  /// on napi's own generated glue rather than on the caller, and the JSDoc tag
+  /// is what actually reaches TypeScript users through `index.d.ts`.
+  ///
+  /// @param fieldName - The field name for which we want to filter deleted docs.
+  /// @param fieldValue - JavaScript value with the value we want to filter.
+  #[napi]
+  pub fn delete_documents(&mut self, field_name: String, field_value: Unknown) -> Result<u64> {
+    self.delete_documents_by_term(field_name, field_value)
   }
 
   /// Delete all documents containing a given term.
@@ -168,7 +177,7 @@ impl IndexWriter {
     field_name: String,
     field_value: Unknown,
   ) -> Result<u64> {
-    let term = crate::make_term(&self.schema, &field_name, field_value)?;
+    let term = crate::make_term(&self.schema, &field_name, &field_value)?;
     Ok(self.inner()?.delete_term(term))
   }
 
@@ -233,7 +242,7 @@ impl Index {
     let reuse = reuse.unwrap_or(true);
     let index = match path {
       Some(p) => {
-        let directory = tantivy::directory::MmapDirectory::open(&p).map_err(to_napi_error)?;
+        let directory = tv::directory::MmapDirectory::open(&p).map_err(to_napi_error)?;
         if reuse {
           tv::Index::open_or_create(directory, schema.inner.clone())
         } else {
@@ -346,8 +355,33 @@ impl Index {
   /// Raises error if the directory cannot be opened.
   #[napi]
   pub fn exists(path: String) -> Result<bool> {
-    let directory = tantivy::directory::MmapDirectory::open(&path).map_err(to_napi_error)?;
+    let directory = tv::directory::MmapDirectory::open(&path).map_err(to_napi_error)?;
     tv::Index::exists(&directory).map_err(to_napi_error)
+  }
+
+  /// Check whether the index stored at `path` can be opened by this version
+  /// of tantivy.
+  ///
+  /// Tantivy stores the index format version in each segment file. When that
+  /// version falls outside the range supported by the bundled tantivy, the
+  /// index cannot be opened. This method reports that without throwing, so a
+  /// caller can decide how to handle an incompatible index (for example, by
+  /// rebuilding it).
+  ///
+  /// @param path - The directory containing the index.
+  ///
+  /// @returns True if the index is compatible, false if it was built with an
+  ///         unsupported index format version.
+  ///
+  /// @throws if no index could be found at the given path or if it could not
+  ///         be read for any other reason.
+  #[napi]
+  pub fn is_compatible(path: String) -> Result<bool> {
+    match tv::Index::open_in_dir(&path).and_then(|index| index.reader().map(|_| ())) {
+      Ok(()) => Ok(true),
+      Err(tv::TantivyError::IncompatibleIndex(_)) => Ok(false),
+      Err(e) => Err(to_napi_error(e)),
+    }
   }
 
   /// The schema of the current index.
@@ -383,15 +417,29 @@ impl Index {
   ///         `prefix` determines if terms which are prefixes of the given term match the query.
   ///         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
   ///         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
+  ///
+  /// @param conjunctionByDefault - If true, the query will be parsed as a
+  ///         conjunction query. Defaults to a disjunction query.
+  ///
+  /// @param allowRegexes - If true, allow regexes in queries.
   #[napi]
+  #[allow(clippy::too_many_arguments)]
   pub fn parse_query(
     &self,
     query: String,
     default_field_names: Option<Vec<String>>,
     field_boosts: Option<HashMap<String, f64>>,
     fuzzy_fields: Option<HashMap<String, (bool, u8, bool)>>,
+    conjunction_by_default: Option<bool>,
+    allow_regexes: Option<bool>,
   ) -> Result<Query> {
-    let parser = self.prepare_query_parser(default_field_names, field_boosts, fuzzy_fields)?;
+    let parser = self.prepare_query_parser(
+      default_field_names,
+      field_boosts,
+      fuzzy_fields,
+      conjunction_by_default,
+      allow_regexes,
+    )?;
 
     let query = parser.parse_query(&query).map_err(to_napi_error)?;
 
@@ -420,21 +468,41 @@ impl Index {
   ///         `distance` determines the maximum Levenshtein distance between terms matching the query and the given term.
   ///         `transpose_cost_one` determines if transpositions of neighbouring characters are counted only once against the Levenshtein distance.
   ///
-  /// Returns a tuple containing the parsed query and a list of error messages.
+  /// @param conjunctionByDefault - If true, the query will be parsed as a
+  ///         conjunction query. Defaults to a disjunction query.
+  ///
+  /// @param allowRegexes - If true, allow regexes in queries.
+  ///
+  /// Returns a tuple containing the parsed query and a list of errors. Each
+  /// error is an instance of one of the exported query parser error classes,
+  /// so it can be matched with `instanceof`.
   #[napi]
-  pub fn parse_query_lenient(
+  #[allow(clippy::too_many_arguments)]
+  pub fn parse_query_lenient<'env>(
     &self,
+    env: &'env Env,
     query: String,
     default_field_names: Option<Vec<String>>,
     field_boosts: Option<HashMap<String, f64>>,
     fuzzy_fields: Option<HashMap<String, (bool, u8, bool)>>,
-  ) -> Result<(Query, Vec<String>)> {
-    let parser = self.prepare_query_parser(default_field_names, field_boosts, fuzzy_fields)?;
+    conjunction_by_default: Option<bool>,
+    allow_regexes: Option<bool>,
+  ) -> Result<(Query, Vec<Unknown<'env>>)> {
+    let parser = self.prepare_query_parser(
+      default_field_names,
+      field_boosts,
+      fuzzy_fields,
+      conjunction_by_default,
+      allow_regexes,
+    )?;
 
     let (query, errors) = parser.parse_query_lenient(&query);
-    let error_messages: Vec<String> = errors.into_iter().map(|err| format!("{:?}", err)).collect();
+    let errors = errors
+      .into_iter()
+      .map(|err| crate::parser_error::to_js(env, err))
+      .collect::<Result<Vec<_>>>()?;
 
-    Ok((Query { inner: query }, error_messages))
+    Ok((Query { inner: query }, errors))
   }
 
   /// Register a custom text analyzer by name. (Confusingly,
@@ -449,6 +517,19 @@ impl Index {
       .tokenizers()
       .register(&name, analyzer.analyzer.clone());
   }
+
+  /// Register a custom text analyzer for fast fields by name. (Confusingly,
+  /// this is one of the places where Tantivy uses 'tokenizer' to refer to a
+  /// TextAnalyzer instance.)
+  ///
+  // Implementation notes: Skipped indirection of TokenizerManager.
+  #[napi]
+  pub fn register_fast_field_tokenizer(&self, name: String, analyzer: &TextAnalyzer) {
+    self
+      .index
+      .fast_field_tokenizer()
+      .register(&name, analyzer.analyzer.clone());
+  }
 }
 
 impl Index {
@@ -457,6 +538,8 @@ impl Index {
     default_field_names: Option<Vec<String>>,
     field_boosts: Option<HashMap<String, f64>>,
     fuzzy_fields: Option<HashMap<String, (bool, u8, bool)>>,
+    conjunction_by_default: Option<bool>,
+    allow_regexes: Option<bool>,
   ) -> Result<tv::query::QueryParser> {
     let schema = self.index.schema();
 
@@ -464,21 +547,13 @@ impl Index {
       default_field_names
         .iter()
         .map(|field_name| {
-          let field = schema.get_field(field_name).map_err(|_err| {
-            Error::new(
-              Status::InvalidArg,
-              format!("Field `{field_name}` is not defined in the schema."),
-            )
-          })?;
-
-          let field_entry = schema.get_field_entry(field);
-          if !field_entry.is_indexed() {
+          let field = crate::get_field(&schema, field_name)?;
+          if !schema.get_field_entry(field).is_indexed() {
             return Err(Error::new(
               Status::InvalidArg,
               format!("Field `{field_name}` is not set as indexed in the schema."),
             ));
           }
-
           Ok(field)
         })
         .collect::<Result<_>>()?
@@ -492,30 +567,22 @@ impl Index {
 
     let mut parser = tv::query::QueryParser::for_index(&self.index, default_fields);
 
-    // Set field boosts if provided
-    if let Some(field_boosts) = field_boosts {
-      for (field_name, boost) in field_boosts {
-        let field = schema.get_field(&field_name).map_err(|_err| {
-          Error::new(
-            Status::InvalidArg,
-            format!("Field `{field_name}` is not defined in the schema."),
-          )
-        })?;
-        parser.set_field_boost(field, boost as tv::Score);
-      }
+    if conjunction_by_default.unwrap_or(false) {
+      parser.set_conjunction_by_default();
     }
 
-    // Set fuzzy fields if provided
-    if let Some(fuzzy_fields) = fuzzy_fields {
-      for (field_name, (prefix, distance, transpose_cost_one)) in fuzzy_fields {
-        let field = schema.get_field(&field_name).map_err(|_err| {
-          Error::new(
-            Status::InvalidArg,
-            format!("Field `{field_name}` is not defined in the schema."),
-          )
-        })?;
-        parser.set_field_fuzzy(field, prefix, distance, transpose_cost_one);
-      }
+    if allow_regexes.unwrap_or(false) {
+      parser.allow_regexes();
+    }
+
+    for (field_name, boost) in field_boosts.unwrap_or_default() {
+      let field = crate::get_field(&schema, &field_name)?;
+      parser.set_field_boost(field, boost as tv::Score);
+    }
+
+    for (field_name, (prefix, distance, transpose_cost_one)) in fuzzy_fields.unwrap_or_default() {
+      let field = crate::get_field(&schema, &field_name)?;
+      parser.set_field_fuzzy(field, prefix, distance, transpose_cost_one);
     }
 
     Ok(parser)
@@ -523,32 +590,31 @@ impl Index {
 
   fn register_custom_text_analyzers(index: &tv::Index) {
     let analyzers = [
-      ("ar_stem", tantivy::tokenizer::Language::Arabic),
-      ("da_stem", tantivy::tokenizer::Language::Danish),
-      ("nl_stem", tantivy::tokenizer::Language::Dutch),
-      ("fi_stem", tantivy::tokenizer::Language::Finnish),
-      ("fr_stem", tantivy::tokenizer::Language::French),
-      ("de_stem", tantivy::tokenizer::Language::German),
-      ("el_stem", tantivy::tokenizer::Language::Greek),
-      ("hu_stem", tantivy::tokenizer::Language::Hungarian),
-      ("it_stem", tantivy::tokenizer::Language::Italian),
-      ("no_stem", tantivy::tokenizer::Language::Norwegian),
-      ("pt_stem", tantivy::tokenizer::Language::Portuguese),
-      ("ro_stem", tantivy::tokenizer::Language::Romanian),
-      ("ru_stem", tantivy::tokenizer::Language::Russian),
-      ("es_stem", tantivy::tokenizer::Language::Spanish),
-      ("sv_stem", tantivy::tokenizer::Language::Swedish),
-      ("ta_stem", tantivy::tokenizer::Language::Tamil),
-      ("tr_stem", tantivy::tokenizer::Language::Turkish),
+      ("ar_stem", tv::tokenizer::Language::Arabic),
+      ("da_stem", tv::tokenizer::Language::Danish),
+      ("nl_stem", tv::tokenizer::Language::Dutch),
+      ("fi_stem", tv::tokenizer::Language::Finnish),
+      ("fr_stem", tv::tokenizer::Language::French),
+      ("de_stem", tv::tokenizer::Language::German),
+      ("el_stem", tv::tokenizer::Language::Greek),
+      ("hu_stem", tv::tokenizer::Language::Hungarian),
+      ("it_stem", tv::tokenizer::Language::Italian),
+      ("no_stem", tv::tokenizer::Language::Norwegian),
+      ("pt_stem", tv::tokenizer::Language::Portuguese),
+      ("ro_stem", tv::tokenizer::Language::Romanian),
+      ("ru_stem", tv::tokenizer::Language::Russian),
+      ("es_stem", tv::tokenizer::Language::Spanish),
+      ("sv_stem", tv::tokenizer::Language::Swedish),
+      ("ta_stem", tv::tokenizer::Language::Tamil),
+      ("tr_stem", tv::tokenizer::Language::Turkish),
     ];
 
     for (name, lang) in &analyzers {
-      let an =
-        tantivy::tokenizer::TextAnalyzer::builder(tantivy::tokenizer::SimpleTokenizer::default())
-          .filter(tantivy::tokenizer::RemoveLongFilter::limit(40))
-          .filter(tantivy::tokenizer::LowerCaser)
-          .filter(tantivy::tokenizer::Stemmer::new(*lang))
-          .build();
+      let an = tv::tokenizer::TextAnalyzer::builder(tv::tokenizer::SimpleTokenizer::default())
+        .filter(tv::tokenizer::RemoveLongFilter::limit(40))
+        .filter(tv::tokenizer::LowerCaser)
+        .filter(tv::tokenizer::Stemmer::new(*lang))
+        .build();
       index.tokenizers().register(name, an);
     }
   }

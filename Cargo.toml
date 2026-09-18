@@ -10,6 +10,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
 napi = { version = "3.12", default-features = false, features = [
   "napi8",
   "serde-json",
@@ -17,7 +18,8 @@ napi = { version = "3.12", default-features = false, features = [
 napi-derive = "3.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-tantivy = "0.25.0"
+tantivy = "0.26.2"
+tantivy-common = "0.11"
 
 [build-dependencies]
 napi-build = "2.4"

@@ -1,4 +1,4 @@
-use napi::{bindgen_prelude::*, Error, JsNumber, Result, Status, ValueType};
+use napi::{bindgen_prelude::*, Error, JsDate, JsNumber, Result, Status, ValueType};
 use napi_derive::napi;
 
 use tantivy::{self as tv, schema::document::OwnedValue as Value};
@@ -165,6 +165,12 @@ pub(crate) fn extract_value(value: &Unknown) -> Result<Value> {
   }
 }
 
+/// True for a finite JavaScript number with no fractional part. Integer fields
+/// reject anything else rather than silently truncating.
+fn is_integral(n: f64) -> bool {
+  n.is_finite() && n.fract() == 0.0
+}
+
 // Simplified schema-aware value extraction (similar to Python)
 pub(crate) fn extract_value_for_type(
   value: &Unknown,
@@ -183,58 +189,80 @@ pub(crate) fn extract_value_for_type(
       let s = value.coerce_to_string()?.into_utf8()?.into_owned()?;
       Ok(Value::Str(s))
     }
-    tv::schema::Type::U64 => {
-      // Reject strings but allow number coercion
-      if matches!(value.get_type()?, ValueType::String) {
-        return Err(Error::new(Status::InvalidArg, error_msg("U64")));
+    tv::schema::Type::U64 => match value.get_type()? {
+      ValueType::BigInt => {
+        let big: BigInt = unsafe { value.cast()? };
+        let (signed, n, lossless) = big.get_u64();
+        if signed || !lossless {
+          return Err(Error::new(Status::InvalidArg, error_msg("U64")));
+        }
+        Ok(Value::U64(n))
       }
-      let n = value.coerce_to_number()?.get_double()?;
-      Ok(Value::U64(n.abs() as u64))
-    }
-    tv::schema::Type::I64 => {
-      if matches!(value.get_type()?, ValueType::String) {
-        return Err(Error::new(Status::InvalidArg, error_msg("I64")));
+      ValueType::Number => {
+        let n = value.coerce_to_number()?.get_double()?;
+        if !is_integral(n) || n < 0.0 || n > u64::MAX as f64 {
+          return Err(Error::new(Status::InvalidArg, error_msg("U64")));
+        }
+        Ok(Value::U64(n as u64))
       }
-      let n = value.coerce_to_number()?.get_double()?;
-      Ok(Value::I64(n as i64))
-    }
+      _ => Err(Error::new(Status::InvalidArg, error_msg("U64"))),
+    },
+    tv::schema::Type::I64 => match value.get_type()? {
+      ValueType::BigInt => {
+        let big: BigInt = unsafe { value.cast()? };
+        let (n, lossless) = big.get_i64();
+        if !lossless {
+          return Err(Error::new(Status::InvalidArg, error_msg("I64")));
+        }
+        Ok(Value::I64(n))
+      }
+      ValueType::Number => {
+        let n = value.coerce_to_number()?.get_double()?;
+        if !is_integral(n) || n < i64::MIN as f64 || n > i64::MAX as f64 {
+          return Err(Error::new(Status::InvalidArg, error_msg("I64")));
+        }
+        Ok(Value::I64(n as i64))
+      }
+      _ => Err(Error::new(Status::InvalidArg, error_msg("I64"))),
+    },
     tv::schema::Type::F64 => {
-      if matches!(value.get_type()?, ValueType::String) {
+      if !matches!(value.get_type()?, ValueType::Number) {
         return Err(Error::new(Status::InvalidArg, error_msg("F64")));
       }
-      let n = value.coerce_to_number()?.get_double()?;
-      Ok(Value::F64(n))
+      Ok(Value::F64(value.coerce_to_number()?.get_double()?))
     }
     tv::schema::Type::Bool => {
       let b = value.coerce_to_bool()?;
       Ok(Value::Bool(b))
     }
-    tv::schema::Type::Date => {
-      match value.get_type()? {
-        ValueType::Number => {
-          let timestamp = value.coerce_to_number()?.get_int64()?;
-          // JavaScript timestamps are in milliseconds
-          Ok(Value::Date(tv::DateTime::from_timestamp_secs(
-            timestamp / 1000,
-          )))
-        }
-        ValueType::String => {
-          // Handle ISO date strings
-          let date_str = value.coerce_to_string()?.into_utf8()?.into_owned()?;
-          if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(&date_str) {
-            Ok(Value::Date(tv::DateTime::from_timestamp_secs(
-              dt.timestamp(),
-            )))
-          } else {
-            Err(Error::new(
-              Status::InvalidArg,
-              format!("Invalid ISO date string: {}", date_str),
-            ))
-          }
-        }
-        _ => Err(Error::new(Status::InvalidArg, error_msg("DateTime"))),
+    tv::schema::Type::Date => match value.get_type()? {
+      // JavaScript timestamps are in milliseconds.
+      ValueType::Number => Ok(Value::Date(tv::DateTime::from_timestamp_millis(
+        value.coerce_to_number()?.get_int64()?,
+      ))),
+      ValueType::String => {
+        // Handle ISO date strings
+        let date_str = value.coerce_to_string()?.into_utf8()?.into_owned()?;
+        let dt = chrono::DateTime::parse_from_rfc3339(&date_str).map_err(|_| {
+          Error::new(
+            Status::InvalidArg,
+            format!("Invalid ISO date string: {}", date_str),
+          )
+        })?;
+        Ok(Value::Date(tv::DateTime::from_timestamp_millis(
+          dt.timestamp_millis(),
+        )))
       }
-    }
+      // A JS `Date` instance carries its time in UTC milliseconds, which is
+      // exactly what tantivy stores.
+      ValueType::Object if value.is_date()? => {
+        let date: JsDate = unsafe { value.cast()? };
+        Ok(Value::Date(tv::DateTime::from_timestamp_millis(
+          date.value_of()? as i64,
+        )))
+      }
+      _ => Err(Error::new(Status::InvalidArg, error_msg("DateTime"))),
+    },
     tv::schema::Type::Facet => {
       let facet_str = value.coerce_to_string()?.into_utf8()?.into_owned()?;
       let facet = tv::schema::Facet::from_text(&facet_str)
@@ -344,10 +372,7 @@ fn value_to_js(env: Env, value: &Value) -> Result<Unknown<'_>> {
     Value::F64(num) => env.to_js_value(num)?,
     Value::Bytes(b) => env.to_js_value(&b.as_slice())?,
     Value::PreTokStr(_pretoken) => env.to_js_value(&())?,
-    Value::Date(d) => {
-      let timestamp = d.into_timestamp_secs();
-      env.to_js_value(&(timestamp as f64 * 1000.0))?
-    }
+    Value::Date(d) => env.to_js_value(&(d.into_timestamp_millis() as f64))?,
     Value::Facet(f) => env.to_js_value(&f.to_string())?,
     Value::Array(arr) => {
       let vec: Vec<serde_json::Value> = arr.iter().map(value_to_serde_json).collect();
@@ -384,8 +409,7 @@ fn value_to_serde_json(value: &Value) -> serde_json::Value {
     ),
     Value::Bool(b) => serde_json::Value::Bool(*b),
     Value::Date(d) => {
-      let timestamp = d.into_timestamp_secs();
-      serde_json::Value::Number(serde_json::Number::from(timestamp))
+      serde_json::Value::Number(serde_json::Number::from(d.into_timestamp_millis()))
     }
     Value::Facet(f) => serde_json::Value::String(f.to_string()),
     Value::Bytes(b) => serde_json::Value::Array(
@@ -829,7 +853,7 @@ impl Document {
   pub fn add_date(&mut self, field_name: String, timestamp_millis: i64) {
     self.add_value(
       field_name,
-      tv::DateTime::from_timestamp_secs(timestamp_millis / 1000),
+      tv::DateTime::from_timestamp_millis(timestamp_millis),
     );
   }
 
@@ -976,6 +1000,31 @@ impl Document {
       out_field_values.insert(key, value_list);
     }
     Ok(())
+  }
+
+  /// Extract the field values of a JavaScript object against a schema.
+  ///
+  /// Unlike `extract_js_values_from_object`, a key that is not a field of the
+  /// schema is an error rather than being skipped: callers use this to build
+  /// a synthetic document, where a silently dropped field would change the
+  /// meaning of the request.
+  pub(crate) fn field_values_from_dict(
+    js_object: &Object,
+    schema: &Schema,
+  ) -> Result<BTreeMap<String, Vec<Value>>> {
+    let mut field_values = BTreeMap::new();
+    let keys = js_object.get_property_names()?;
+    for i in 0..keys.get_array_length()? {
+      let key: String = keys.get_element(i)?;
+      let js_value: Unknown = js_object.get_named_property(&key)?;
+      let field = crate::get_field(&schema.inner, &key)?;
+      let field_type = schema.inner.get_field_entry(field).field_type();
+      field_values.insert(
+        key.clone(),
+        extract_value_single_or_list_for_type(&js_value, field_type, &key)?,
+      );
+    }
+    Ok(field_values)
   }
 
   pub fn iter_values_for_field<'a>(&'a self, field: &str) -> impl Iterator<Item = &'a Value> + 'a {

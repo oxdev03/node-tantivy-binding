@@ -5,12 +5,58 @@ use std::{
   str::ParseBoolError,
 };
 
+use napi::bindgen_prelude::*;
+use napi::{Error, Result, Status};
 use napi_derive::napi;
 use tantivy::{self as tv};
 
 // TODO: Expose this to bindings once trait support is available.
 pub(crate) trait QueryParserError {
   fn full_message(&self) -> String;
+}
+
+/// Convert a tantivy query parser error into an instance of the matching
+/// JavaScript error class, mirroring tantivy-py's `query_parser_error`
+/// submodule. Used by `Index.parseQueryLenient`, so callers can branch on
+/// `err instanceof FieldDoesNotExistError` instead of parsing a message.
+pub(crate) fn to_js<'env>(
+  env: &'env Env,
+  error: tv::query::QueryParserError,
+) -> Result<Unknown<'env>> {
+  use tv::query::QueryParserError as E;
+
+  // Each arm only inspects the discriminant; `error` itself is still owned
+  // here, so the matching `TryFrom` impl can consume it.
+  macro_rules! as_js {
+    ($ty:ty) => {
+      <$ty>::try_from(error)
+        .map_err(|message| Error::new(Status::GenericFailure, message))?
+        .into_instance(env)?
+        .to_unknown()
+    };
+  }
+
+  Ok(match error {
+    E::SyntaxError(..) => as_js!(SyntaxError),
+    E::UnsupportedQuery(..) => as_js!(UnsupportedQueryError),
+    E::FieldDoesNotExist(..) => as_js!(FieldDoesNotExistError),
+    E::ExpectedInt(..) => as_js!(ExpectedIntError),
+    E::ExpectedBase64(..) => as_js!(ExpectedBase64Error),
+    E::ExpectedFloat(..) => as_js!(ExpectedFloatError),
+    E::ExpectedBool(..) => as_js!(ExpectedBoolError),
+    E::AllButQueryForbidden => as_js!(AllButQueryForbiddenError),
+    E::NoDefaultFieldDeclared => as_js!(NoDefaultFieldDeclaredError),
+    E::FieldNotIndexed(..) => as_js!(FieldNotIndexedError),
+    E::FieldDoesNotHavePositionsIndexed(..) => as_js!(FieldDoesNotHavePositionsIndexedError),
+    E::PhrasePrefixRequiresAtLeastTwoTerms { .. } => {
+      as_js!(PhrasePrefixRequiresAtLeastTwoTermsError)
+    }
+    E::UnknownTokenizer { .. } => as_js!(UnknownTokenizerError),
+    E::RangeMustNotHavePhrase => as_js!(RangeMustNotHavePhraseError),
+    E::DateFormatError(..) => as_js!(DateFormatError),
+    E::FacetFormatError(..) => as_js!(FacetFormatError),
+    E::IpFormatError(..) => as_js!(IpFormatError),
+  })
 }
 
 /// Error in the query syntax.

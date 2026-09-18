@@ -2,7 +2,7 @@ use crate::schema::Schema;
 use napi::{Error, Result, Status};
 use napi_derive::napi;
 use tantivy::schema::{
-  BytesOptions, DateOptions, IndexRecordOption, IpAddrOptions, NumericOptions,
+  BytesOptions, DateOptions, IndexRecordOption, IpAddrOptions, JsonObjectOptions, NumericOptions,
   Schema as TantivySchema, SchemaBuilder as TantivySchemaBuilder, TextFieldIndexing, TextOptions,
   INDEXED,
 };
@@ -35,6 +35,25 @@ pub struct TextFieldOptions {
   pub tokenizer_name: Option<String>,
   /// Index record option: "basic", "freq", or "position" (default: "position")
   pub index_option: Option<String>,
+}
+
+/// JSON field options
+#[napi(object)]
+pub struct JsonFieldOptions {
+  /// Store the field value (can be retrieved from search results)
+  pub stored: Option<bool>,
+  /// Fast field access (column-oriented storage)
+  pub fast: Option<bool>,
+  /// Tokenizer name to use (default: "default")
+  pub tokenizer_name: Option<String>,
+  /// Index record option: "basic", "freq", or "position" (default: "position")
+  pub index_option: Option<String>,
+  /// If true, a "." in a JSON object key is treated as a path separator, the
+  /// same as a "." between keys in a query string. E.g. `{"a.b": "hello"}` is
+  /// then indexed as if it was `{"a": {"b": "hello"}}`, reachable via
+  /// `attrs.a.b` instead of the default escaped form `attrs.a\.b`.
+  /// Defaults to false.
+  pub expand_dots_enabled: Option<bool>,
 }
 
 /// Numeric field options (for integers, floats, dates)
@@ -230,14 +249,28 @@ impl SchemaBuilder {
   pub fn add_json_field(
     &mut self,
     name: String,
-    options: Option<TextFieldOptions>,
+    options: Option<JsonFieldOptions>,
   ) -> Result<&Self> {
+    let expand_dots = options
+      .as_ref()
+      .and_then(|o| o.expand_dots_enabled)
+      .unwrap_or(false);
+    let text_options = Self::build_text_options(options.map(|o| TextFieldOptions {
+      stored: o.stored,
+      fast: o.fast,
+      tokenizer_name: o.tokenizer_name,
+      index_option: o.index_option,
+    }))?;
+
+    let mut opts: JsonObjectOptions = text_options.into();
+    if expand_dots {
+      opts = opts.set_expand_dots_enabled();
+    }
+
     let builder = self
       .inner
       .as_mut()
       .ok_or_else(|| Error::new(Status::InvalidArg, "Schema builder is no longer valid"))?;
-
-    let opts = Self::build_text_options(options)?;
     builder.add_json_field(&name, opts);
     Ok(self)
   }
