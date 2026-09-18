@@ -214,3 +214,75 @@ export const createSpanishIndex = () => {
   index.reload()
   return index
 }
+
+export const schemaOrderFastFields = () => {
+  return new SchemaBuilder()
+    .addTextField('title', { stored: true })
+    .addUnsignedField('u64_field', { fast: true })
+    .addIntegerField('i64_field', { fast: true })
+    .addFloatField('f64_field', { fast: true })
+    .addBooleanField('bool_field', { fast: true })
+    .addDateField('date_field', { fast: true })
+    .addTextField('str_field', { fast: true })
+    .build()
+}
+
+export const createIndexWithOrderFastFields = (dir?: string) => {
+  const index = new Index(schemaOrderFastFields(), dir)
+  const writer = index.writer(15_000_000, 1)
+
+  const low = new Document()
+  low.addText('title', 'low title')
+  low.addUnsigned('u64_field', 0)
+  low.addInteger('i64_field', -10)
+  low.addFloat('f64_field', 1.5)
+  low.addBoolean('bool_field', false)
+  low.addDate('date_field', Date.UTC(2024, 0, 1))
+  low.addText('str_field', 'apple')
+  writer.addDocument(low)
+
+  const high = new Document()
+  high.addText('title', 'high title')
+  high.addUnsigned('u64_field', 2)
+  high.addInteger('i64_field', 5)
+  high.addFloat('f64_field', 3.14)
+  high.addBoolean('bool_field', true)
+  high.addDate('date_field', Date.UTC(2026, 0, 1))
+  high.addText('str_field', 'cherry')
+  writer.addDocument(high)
+
+  writer.commit()
+  writer.waitMergingThreads()
+  index.reload()
+  return index
+}
+
+export const createIndexWithEmptyFastField = () => {
+  const indexSchema = new SchemaBuilder()
+    .addTextField('title', { fast: true, stored: true })
+    .addTextField('body', { fast: true })
+    .build()
+
+  const index = new Index(indexSchema)
+  const writer = index.writer(15_000_000, 1)
+
+  writer.addDocument(
+    Document.fromDict({
+      title:
+        'A record of the statesmanship and political achievements of Gen. Winfield Scott Hancock, ' +
+        'regular Democratic nominee for president of the United States',
+    }),
+  )
+  writer.addDocument(Document.fromDict({ title: 'Political Achievements of the Earl of Dalkeith' }))
+  writer.addDocument(
+    Document.fromDict({
+      title: 'The Old Man and the Sea',
+      body: 'He was an old man who fished alone inthe Gulf Stream and he had gone eighty-four days now without taking a fish.',
+    }),
+  )
+
+  writer.commit()
+  writer.waitMergingThreads()
+  index.reload()
+  return index
+}

@@ -1,4 +1,4 @@
-exclude = ["node_modules/**/*.toml"]
+exclude = ["node_modules/**/*.toml", "tantivy-py/**/*.toml"]
 
 # https://taplo.tamasfe.dev/configuration/formatter-options.html
 [formatting]

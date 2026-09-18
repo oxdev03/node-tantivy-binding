@@ -288,6 +288,245 @@ console.assert(results.hits.length === 1, 'Should find one document with complex
 console.assert(results.hits[0].score !== undefined && results.hits[0].score > 0, 'Result should have a positive score')
 ```
 
+## Combining Queries Fluently
+
+`Query.booleanQuery()` is explicit but verbose for the common case of "this and that". Every query also carries three helpers — `andMustMatch`, `orShouldMatch` and `andMustNotMatch` — each taking a list of queries.
+
+Chaining the same operator keeps the result flat rather than nesting one level per call, and mixing operators groups the left-hand side, so `a.andMustMatch([b]).orShouldMatch([c])` means `(a AND b) OR c`.
+
+<!-- example:boolean-query-helpers source:../examples/boolean-query-helpers.ts -->
+
+```typescript
+import { SchemaBuilder, Index, Document, Query } from '@oxdev03/node-tantivy-binding'
+
+// Setup index with three books
+const schemaBuilder = new SchemaBuilder()
+schemaBuilder.addTextField('title', { stored: true })
+schemaBuilder.addTextField('body', { stored: true })
+const schema = schemaBuilder.build()
+
+const index = new Index(schema)
+const writer = index.writer()
+
+for (const [title, body] of [
+  ['The Old Man and the Sea', 'He was an old man who fished alone in a skiff in the Gulf Stream.'],
+  ['Of Mice and Men', 'A few miles south of Soledad, the Salinas River drops in close to the hillside bank.'],
+  ['Frankenstein', 'You will rejoice to hear that no disaster has accompanied the commencement.'],
+]) {
+  const doc = new Document()
+  doc.addText('title', title)
+  doc.addText('body', body)
+  writer.addDocument(doc)
+}
+writer.commit()
+writer.waitMergingThreads()
+index.reload()
+
+const searcher = index.searcher()
+const old = Query.termQuery(schema, 'title', 'old')
+const man = Query.termQuery(schema, 'title', 'man')
+const mice = Query.termQuery(schema, 'title', 'mice')
+
+// AND: both terms must appear in the title
+const both = old.andMustMatch([man])
+console.log('old AND man:', searcher.search(both, 10).hits.length)
+
+// OR: either query may match. Several queries can be passed at once
+const either = old.orShouldMatch([mice])
+console.log('old OR mice:', searcher.search(either, 10).hits.length)
+
+// AND NOT: exclude documents matching the given queries
+const withoutSea = Query.termQuery(schema, 'body', 'the').andMustNotMatch([old])
+console.log('the AND NOT old:', searcher.search(withoutSea, 10).hits.length)
+
+// Chains stay flat, and mixing AND with OR groups the left-hand side:
+// (old AND man) OR mice
+const mixed = old.andMustMatch([man]).orShouldMatch([mice])
+
+// Assertions
+console.assert(searcher.search(both, 10).hits.length === 1, 'old AND man should match one document')
+console.assert(searcher.search(either, 10).hits.length === 2, 'old OR mice should match two documents')
+console.assert(searcher.search(withoutSea, 10).hits.length === 2, 'excluding "old" should leave two documents')
+console.assert(searcher.search(mixed, 10).hits.length === 2, '(old AND man) OR mice should match two documents')
+```
+
+## Aggregating Results
+
+`searcher.aggregate()` takes an aggregation spec as a plain object and returns the result as one. Every aggregated field must be declared `fast` in the schema. `searcher.cardinality()` is a shorthand for the distinct-value count of a single field.
+
+<!-- example:aggregations source:../examples/aggregations.ts -->
+
+```typescript
+import { SchemaBuilder, Index, Document, Query } from '@oxdev03/node-tantivy-binding'
+
+// Aggregations run over fast fields, so every aggregated field must be fast
+const schemaBuilder = new SchemaBuilder()
+schemaBuilder.addTextField('category', { stored: true, fast: true, tokenizerName: 'raw' })
+schemaBuilder.addFloatField('price', { stored: true, indexed: true, fast: true })
+const schema = schemaBuilder.build()
+
+const index = new Index(schema)
+const writer = index.writer()
+
+for (const [category, price] of [
+  ['books', 12.5],
+  ['books', 30.0],
+  ['music', 9.99],
+  ['music', 9.99],
+] as [string, number][]) {
+  const doc = new Document()
+  doc.addText('category', category)
+  doc.addFloat('price', price)
+  writer.addDocument(doc)
+}
+writer.commit()
+writer.waitMergingThreads()
+index.reload()
+
+const searcher = index.searcher()
+const all = Query.allQuery()
+
+// Aggregation specs are plain objects, and the result comes back as one too
+const result = searcher.aggregate(all, {
+  by_category: {
+    terms: { field: 'category' },
+    aggs: { avg_price: { avg: { field: 'price' } } },
+  },
+}) as any
+
+for (const bucket of result.by_category.buckets) {
+  console.log(`${bucket.key}: ${bucket.doc_count} items, avg ${bucket.avg_price.value}`)
+}
+
+// cardinality() is a shorthand for the distinct-value count of one field
+const distinctPrices = searcher.cardinality(all, 'price')
+console.log('distinct prices:', distinctPrices)
+
+// Assertions
+console.assert(result.by_category.buckets.length === 2, 'Should produce one bucket per category')
+console.assert(distinctPrices === 3, 'There are three distinct prices')
+```
+
+## Autocomplete and Fast-field Reads
+
+`searcher.termsWithPrefix()` walks the term dictionary of a text field and returns each matching term with the number of documents containing it, sorted by count. An optional filter query scopes those counts, which is what you want when results must respect per-user visibility.
+
+When you only need one numeric field for many hits, `searcher.fastFieldValues()` reads it straight out of the column instead of fetching each stored document.
+
+<!-- example:autocomplete source:../examples/autocomplete.ts -->
+
+```typescript
+import { SchemaBuilder, Index, Document, Query } from '@oxdev03/node-tantivy-binding'
+
+// termsWithPrefix walks the term dictionary, so the field only needs indexing.
+// fastFieldValues reads a column, so that field must be declared fast.
+const schemaBuilder = new SchemaBuilder()
+schemaBuilder.addTextField('body')
+schemaBuilder.addUnsignedField('owner_id', { stored: true, indexed: true, fast: true })
+const schema = schemaBuilder.build()
+
+const index = new Index(schema)
+const writer = index.writer()
+
+for (const [body, owner] of [
+  ['apple banana', 1],
+  ['apple apricot', 2],
+  ['cherry date', 1],
+] as [string, number][]) {
+  const doc = new Document()
+  doc.addText('body', body)
+  doc.addUnsigned('owner_id', owner)
+  writer.addDocument(doc)
+}
+writer.commit()
+writer.waitMergingThreads()
+index.reload()
+
+const searcher = index.searcher()
+
+// Suggestions for a prefix, sorted by document frequency then alphabetically
+const suggestions = searcher.termsWithPrefix('body', 'ap')
+for (const { term, count } of suggestions) {
+  console.log(`${term} (${count})`)
+}
+
+// A filter query scopes the counts, e.g. to documents the user may see
+const ownedByUser2 = Query.termQuery(schema, 'owner_id', 2)
+const scoped = searcher.termsWithPrefix('body', 'ap', ownedByUser2, 5)
+
+// Reading one numeric column for many hits is far cheaper than fetching
+// each stored document just to pull a single field out of it
+const hits = searcher.search(index.parseQuery('apple', ['body']), 10).hits
+const owners = searcher.fastFieldValues(
+  'owner_id',
+  hits.map((hit) => hit.docAddress),
+)
+console.log('owners of matching documents:', owners)
+
+// Assertions
+console.assert(suggestions[0].term === 'apple' && suggestions[0].count === 2, 'apple appears in two documents')
+console.assert(scoped.length === 2, 'user 2 sees both apple and apricot')
+console.assert(owners.length === 2, 'One value per hit, in hit order')
+```
+
+## Ordering and Weighting Results
+
+By default results come back ranked by BM25 relevance, and each hit carries a `score`. Passing `orderByField` replaces that with the value of a fast field — each hit then carries `order` instead, typed after the field (number, boolean or string; dates arrive as milliseconds since the epoch).
+
+`weightByField` is the middle ground: relevance still decides the ranking, but each score is multiplied by `log2(2 + fieldValue)`, so a popularity signal can nudge results without overriding the text match.
+
+<!-- example:sorted-search source:../examples/sorted-search.ts -->
+
+```typescript
+import { SchemaBuilder, Index, Document, Order } from '@oxdev03/node-tantivy-binding'
+
+// Both ordering and weighting read from fast fields
+const schemaBuilder = new SchemaBuilder()
+schemaBuilder.addTextField('title', { stored: true })
+schemaBuilder.addUnsignedField('views', { stored: true, indexed: true, fast: true })
+const schema = schemaBuilder.build()
+
+const index = new Index(schema)
+const writer = index.writer()
+
+for (const [title, views] of [
+  ['tantivy basics', 10],
+  ['tantivy advanced', 500],
+] as [string, number][]) {
+  const doc = new Document()
+  doc.addText('title', title)
+  doc.addUnsigned('views', views)
+  writer.addDocument(doc)
+}
+writer.commit()
+writer.waitMergingThreads()
+index.reload()
+
+const searcher = index.searcher()
+const query = index.parseQuery('tantivy', ['title'])
+
+// orderByField replaces the relevance score with the field value. Each hit
+// then carries `order` instead of `score`, typed after the field.
+const byViews = searcher.search(query, 10, true, 'views')
+console.log('most viewed first:', byViews.hits[0].order)
+
+// Ascending order, and an offset, are available too
+const leastViewed = searcher.search(query, 10, true, 'views', 0, Order.Asc)
+
+// weightByField keeps BM25 relevance but multiplies each score by
+// log2(2 + fieldValue), so popular documents float up without ignoring the text
+const weighted = searcher.search(query, 10, true, undefined, undefined, undefined, 'views')
+
+// Assertions
+console.assert(byViews.hits[0].order === 500, 'Descending order puts the most viewed first')
+console.assert(leastViewed.hits[0].order === 10, 'Ascending order puts the least viewed first')
+console.assert(weighted.hits[0].score !== undefined, 'Weighted search still produces a score')
+console.assert(
+  (searcher.doc(weighted.hits[0].docAddress).toDict() as any).title[0] === 'tantivy advanced',
+  'The heavier document wins once weighted',
+)
+```
+
 ## Debugging Queries with explain()
 
 When working with search queries, it's often useful to understand why a particular document matched a query and how its score was calculated. The `explain()` method provides detailed information about the scoring process.
