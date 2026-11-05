@@ -71,7 +71,7 @@
     "@oxc-node/core": "^0.1.0",
     "@taplo/cli": "^0.7.0",
     "@tybys/wasm-util": "^0.10.4",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.0.0",
     "chalk": "^6.0.0",
     "emnapi": "^1.11.3",
     "husky": "^9.1.7",
